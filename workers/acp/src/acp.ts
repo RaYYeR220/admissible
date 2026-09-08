@@ -112,6 +112,17 @@ export async function agentByWallet(wallet: string): Promise<Agent | null> {
   return ((await res.json()) as { data: Agent }).data ?? null;
 }
 
+/** Turn a thrown child-process failure into an Error carrying code + recovery. */
+function cliError(raw: { stderr?: string; stdout?: string }, args: string[]): Error {
+  const text = `${raw.stderr ?? ""}\n${raw.stdout ?? ""}`;
+  const message = /CliError:\s*(.+)/.exec(text)?.[1]?.trim();
+  const code = /\bcode:\s*'([^']+)'/.exec(text)?.[1];
+  const recovery = /\brecovery:\s*'([^']+)'/.exec(text)?.[1];
+  const err = new Error(message ?? `acp ${args.join(" ")} failed`);
+  Object.assign(err, { code, recovery, command: `acp ${args.join(" ")}` });
+  return err;
+}
+
 /** Absolute path to the ACP CLI's JS entry point, if it can be located. */
 function resolveCliEntry(): string | null {
   if (process.env.ACP_CLI_JS) return process.env.ACP_CLI_JS;
@@ -140,11 +151,19 @@ export async function cli<T = unknown>(args: string[]): Promise<T> {
     ? [process.execPath, [js, ...args, "--json"]]
     : [CLI_BIN, [...args, "--json"]];
 
-  const { stdout } = await execFileAsync(bin, argv, {
-    timeout: CLI_TIMEOUT_MS,
-    maxBuffer: 16 * 1024 * 1024,
-    shell: !js && process.platform === "win32",
-  });
+  let stdout: string;
+  try {
+    ({ stdout } = await execFileAsync(bin, argv, {
+      timeout: CLI_TIMEOUT_MS,
+      maxBuffer: 16 * 1024 * 1024,
+      shell: !js && process.platform === "win32",
+    }));
+  } catch (raw) {
+    // A CLI that exits non-zero prints a stack trace, not JSON. Pull the
+    // structured bits out so callers can branch on a code instead of a string.
+    throw cliError(raw as { stderr?: string; stdout?: string }, args);
+  }
+
   const line = stdout.trim().split("\n").find((l) => l.trim().startsWith("{"));
   if (!line) throw new Error(`acp ${args[0]}: no JSON on stdout`);
   const parsed = JSON.parse(line);

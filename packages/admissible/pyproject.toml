@@ -25,6 +25,10 @@ dev = ["pytest>=7.0"]
 packages = ["src/admissible"]
 
 [tool.pytest.ini_options]
+markers = [
+    "anvil: differential tests against a locally deployed contract",
+    "live: tests that read Base mainnet over the network",
+]
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "-q"

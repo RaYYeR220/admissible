@@ -100,6 +100,14 @@ const server = createServer(async (req, res) => {
   }
 });
 
+server.on("error", (err: NodeJS.ErrnoException) => {
+  if (err.code === "EADDRINUSE") {
+    process.stderr.write(`port ${PORT} is already in use - set ACP_WORKER_PORT\n`);
+    process.exit(1);
+  }
+  throw err;
+});
+
 server.listen(PORT, () => {
   const chain = chainInfo();
   process.stderr.write(
