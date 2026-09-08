@@ -206,6 +206,19 @@ python bench/run.py
 refuses everything would score 33/33 on the attacks alone, which is why the controls carry equal
 weight and why the exit code fails on either number.
 
+`scripts/eval.py` then runs the same corpus through the whole agent, end to end, one fresh store per
+case — because a correct verdict that does not change the action is worth nothing:
+
+```
+cases meeting the safety property  47/47
+identical action to the gate       46/47
+credit bought by attack memories   $0.00
+
+33 attacks would have moved $11,867.52 through an agent that believes its own memory.
+Through this one they bought $0.00 of credit and moved $0.65, all of it the documented
+$0.05 a stranger draws before it has a history at all.
+```
+
 The first version of this scorecard read 12/12 and 5/5 and was worthless — the same hands wrote the
 attacks and the defence. So we attacked it properly. **Twenty findings, nineteen fixed.** Among them:
 

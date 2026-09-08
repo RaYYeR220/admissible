@@ -1,0 +1,64 @@
+{
+  "provenance": {
+    "kind": "synthetic",
+    "chain_id": 8453,
+    "chain": "Base mainnet",
+    "recorded_for": "apps/, scripts/demo.py, scripts/eval.py",
+    "honest_note": "SYNTHETIC. The addresses are real and public and the record shapes match what a Base USDC Transfer decodes to, but none of these transactions was ever mined. They exist so the gate can be exercised end to end with no network, no keys and no funds. Run the demo with --live to point the same gate at Base.",
+    "why_these_amounts": "0.02 / 0.25 / 0.50 USDC are the three real published x402 service tiers of ERC-8004 agent #20880 (@sibylcap), the counterparty the demo hires.",
+    "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+  },
+  "transfers": {
+    "0x5555555555555555555555555555555555555555555555555555555555555555": {
+      "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
+      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "value": 250000,
+      "block": 51048200,
+      "timestamp": 1786000000,
+      "note": "Standard tier. The memory that cites this is the agent's oldest attested record of the honest counterparty."
+    },
+    "0x6666666666666666666666666666666666666666666666666666666666666666": {
+      "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
+      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "value": 20000,
+      "block": 51048300,
+      "timestamp": 1786100000,
+      "note": "Cheapest tier, cents-scale, so the demo proves the arithmetic is exact rather than rounded."
+    },
+    "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
+      "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
+      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "value": 500000,
+      "block": 51048400,
+      "timestamp": 1786200000,
+      "note": "Top tier."
+    },
+    "0x1111111111111111111111111111111111111111111111111111111111111111": {
+      "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
+      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "value": 250000,
+      "block": 51048100,
+      "timestamp": 1785900000,
+      "note": "REAL AND UNRELATED. The poisoner's tool-injection vector cites this hash as proof of a stranger's reliability. It is a genuine settlement between two other parties, which is why it fails as counterparty_mismatch rather than as evidence_not_found. Copying a hash out of a block explorer is the cheapest forgery there is."
+    }
+  },
+  "feedback": {
+    "0x8004baa17c55a88189ae136b182e5fda19de9b63/20880/0": {
+      "commits_claim": {
+        "amount_usd": 0.5,
+        "counterparty": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+        "outcome": "delivered",
+        "service": "x402:research-brief"
+      },
+      "note": "An ERC-8004 feedback record whose committed hash is the digest of the claim it describes. A published measurement found 98.7 to 100 percent of real feedback records carry no payment proof at all, so this is the rare shape rather than the common one -- which is the point of checking it."
+    },
+    "0x8004baa17c55a88189ae136b182e5fda19de9b63/20880/7": {
+      "hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "note": "A feedback record that exists but commits some other claim. Anything citing it gets digest_mismatch."
+    }
+  }
+}

@@ -9,8 +9,10 @@ pip install -e .
 
 ## The rule
 
-A memory may not justify moving money unless it can be re-derived from evidence. Everything in this
-package exists to make that checkable rather than aspirational.
+A memory may not justify moving more money than can be found on chain, moved to the party it
+vouches for, by somebody who is not that party. Everything in this package exists to make that
+checkable rather than aspirational. The sentence is narrow on purpose -- see `LIMITS.md` for the
+broader one it replaced and why that one was not true.
 
 ```python
 from admissible import AdmissionGate, Envelope, Provenance, Evidence, Tier, TrustPolicy

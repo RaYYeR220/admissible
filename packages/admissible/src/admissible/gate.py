@@ -2,8 +2,8 @@
 
 One rule, enforced in code rather than in a prompt:
 
-    A memory may not justify moving money unless it can be re-derived from
-    evidence that someone other than its author can check.
+    A memory may not justify moving more money than can be found on chain,
+    moved to the party it vouches for, by somebody who is not that party.
 
 Everything else here is bookkeeping in service of that sentence.
 

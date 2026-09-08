@@ -5,8 +5,8 @@ what it buys, from whom, and at what price, and most agent memory layers accept 
 claim because it is in the store rather than because anything backs it.
 
 This package adds one rule and the machinery to enforce it: a memory may not
-justify a money decision unless it can be re-derived from evidence somebody other
-than its author can check.
+justify moving more money than can be found on chain, moved to the party it vouches
+for, by somebody who is not that party.
 
 Layout
 ------
