@@ -23,48 +23,29 @@ node_modules/
 out/
 *.tsbuildinfo
 
-# foundry
+# foundry — deps are vendored with `forge install`, not committed
+contracts/lib/
 contracts/out/
 contracts/cache/
 contracts/broadcast/*/dry-run/
 
-# data
+# local state
 *.db
 *.db-wal
 *.db-shm
 .sibyl-memory/
+.demo/
 
-# os / editor
+# os and editors
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
 
-# internal / working artifacts — never publish
+# working notes and scratch, kept out of the published tree
 _internal/
 *-internal/
-BRIEF.md
-ALTERNATIVES.md
-CLAUDE.md
-AGENTS.md
-.claude/
-.remember/
-MEMORY.md
-superpowers/
-docs/superpowers/
-.agents/
-plans/
-specs/
-ui-prototypes/
-mockups/
-design-ref/
-variants/
 scratch/
+notes/
 *-backup*
 *.bundle
-
-# foundry deps are vendored via `forge install`, not committed
-contracts/lib/
-
-# demo scratch state
-.demo/
