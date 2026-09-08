@@ -144,12 +144,14 @@ evidence location is treated as exactly what it is: hearsay wearing a better hat
 ## Run it
 
 ```bash
-pip install -e packages/admissible
+pip install -r requirements.txt
 python bench/run.py            # the adversarial scorecard
 python scripts/demo.py         # the full story, offline
+pytest                         # 249 tests
 ```
 
-No keys. No funds. No network. The default path uses recorded chain fixtures and says so.
+No keys. No funds. No network after the install. The default path uses recorded chain fixtures and
+says so on every surface that shows a number.
 
 ```bash
 python scripts/demo.py --session 1     # forged memory arrives, gate refuses, source flagged

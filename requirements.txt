@@ -1,0 +1,22 @@
+# Everything needed to run the demo, the scorecard, the tests and the web surface.
+#
+#     pip install -r requirements.txt
+#
+# No API key, no funded wallet and no network access is needed after this line.
+# The chain reader falls back to recorded fixtures and says so on every surface.
+
+# the package itself, editable so the source you read is the source that runs
+-e packages/admissible
+-e packages/admissible-mcp
+
+# the agent runtime. sibyl-memory-langgraph is Sibyl's own BaseStore adapter,
+# which is what lets the graph and our store be one SQLite file rather than two.
+langgraph>=1.0
+sibyl-memory-langgraph==0.2.0
+
+# the web surface
+fastapi
+uvicorn
+
+# tests
+pytest>=7.0
