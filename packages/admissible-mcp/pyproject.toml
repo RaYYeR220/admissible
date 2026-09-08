@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "admissible-mcp"
+version = "0.1.0"
+description = "MCP server exposing Sibyl Memory with the Admissible provenance gate in front of it: every read returns a claim and the verdict on it."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["mcp", "model-context-protocol", "memory", "provenance", "agent", "base", "erc-8004"]
+
+dependencies = [
+    # Works against both major versions of the SDK: mcp 2 renamed FastMCP to
+    # MCPServer and the server imports whichever is installed. Pinning to one
+    # would strand anyone sharing an environment with the other.
+    "mcp>=1.0",
+    # The layer this server exposes. Not on PyPI: install it from the repo
+    # first with `pip install -e packages/admissible`, which satisfies this.
+    "admissible>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+admissible-mcp = "admissible_mcp.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/admissible_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Both source trees, so the suite runs from a bare checkout with nothing
+# installed -- the same discipline as the admissible package's own tests.
+pythonpath = ["src", "../admissible/src"]
+addopts = "-q"

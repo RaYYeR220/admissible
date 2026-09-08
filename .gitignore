@@ -65,3 +65,6 @@ scratch/
 
 # foundry deps are vendored via `forge install`, not committed
 contracts/lib/
+
+# demo scratch state
+.demo/
