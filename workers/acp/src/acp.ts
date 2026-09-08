@@ -242,12 +242,22 @@ export async function poll(jobId: string): Promise<Record<string, unknown>> {
   return job;
 }
 
-/** Whether the CLI is installed and signed in. Reported by /health. */
-export async function authStatus(): Promise<{ ready: boolean; agent?: unknown; reason?: string }> {
+type AuthStatus = { ready: boolean; agent?: unknown; reason?: string };
+let authCache: { at: number; value: AuthStatus } | null = null;
+
+/**
+ * Whether the CLI is installed and signed in. Reported by /health.
+ * Cached briefly: each call spawns the CLI, which takes seconds, and /health
+ * gets polled.
+ */
+export async function authStatus(): Promise<AuthStatus> {
+  if (authCache && Date.now() - authCache.at < 30_000) return authCache.value;
+  let value: AuthStatus;
   try {
-    const agent = await cli(["agent", "whoami"]);
-    return { ready: true, agent };
+    value = { ready: true, agent: await cli(["agent", "whoami"]) };
   } catch (err) {
-    return { ready: false, reason: (err as Error).message };
+    value = { ready: false, reason: (err as Error).message };
   }
+  authCache = { at: Date.now(), value };
+  return value;
 }
