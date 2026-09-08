@@ -1,0 +1,124 @@
+{
+  "provenance": {
+    "kind": "synthetic",
+    "chain": "Base mainnet",
+    "chain_id": 8453,
+    "recorded_for": "web/seed.py and web/server.py",
+    "honest_note": "SYNTHETIC. Every address in this file is real and public and every record has the shape a Base USDC Transfer decodes to, but none of these transactions was ever mined. They exist so the same gate that runs against Base can be exercised with no network, no keys and no funds. The web surface says 'offline fixtures' in its own status line whenever it is reading this file, and it never claims otherwise.",
+    "why_these_amounts": "0.02 / 0.25 / 0.50 USDC are the three real published x402 service tiers of ERC-8004 agent #20880 (@sibylcap), the counterparty the demo hires.",
+    "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+  },
+  "transfers": {
+    "0x5555555555555555555555555555555555555555555555555555555555555555": {
+      "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
+      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "value": 250000,
+      "block": 51048200,
+      "timestamp": 1786000000,
+      "note": "Standard tier. The oldest attested record the agent holds about the honest counterparty."
+    },
+    "0x6666666666666666666666666666666666666666666666666666666666666666": {
+      "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
+      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "value": 20000,
+      "block": 51048300,
+      "timestamp": 1786100000,
+      "note": "Cheapest tier, cents-scale, so the arithmetic is exact rather than rounded."
+    },
+    "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
+      "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
+      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "value": 500000,
+      "block": 51048400,
+      "timestamp": 1786200000,
+      "note": "Top tier."
+    },
+    "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": {
+      "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
+      "to": "0x0000000000000000000000000000000000C0FFEE",
+      "value": 1000000,
+      "block": 51048500,
+      "timestamp": 1786300000,
+      "note": "A genuine settlement with the referral desk. The memory citing it carries a validity window that has since closed, which is how the surface shows EXPIRED: true history, not current fact."
+    },
+    "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc": {
+      "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
+      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "value": 500000,
+      "block": 51048450,
+      "timestamp": 1786250000,
+      "note": "The advisory engagement the ERC-8004 feedback record below was written about. It is the payment that gives that review any weight at all: a review is worth what its author paid for it."
+    },
+    "0x1111111111111111111111111111111111111111111111111111111111111111": {
+      "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
+      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "value": 250000,
+      "block": 51048100,
+      "timestamp": 1785900000,
+      "note": "GENUINE AND UNRELATED. A forged memory cites this hash as proof that a stranger is reliable. It is a settlement between two other parties, which is why it fails as counterparty_mismatch rather than evidence_not_found. Copying a hash out of a block explorer is the cheapest forgery there is."
+    },
+    "0x7777777777777777777777777777777777777777777777777777777777777777": {
+      "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "from": "0x000000000000000000000000000000000000dEaD",
+      "to": "0x00000000000000000000000000000000DeadBe3f",
+      "value": 4000000,
+      "block": 51048600,
+      "timestamp": 1786400000,
+      "note": "Self-dealing. Real USDC, a real transfer, both addresses the same actor's. Four dollars of track record for the price of gas -- and it only becomes visible once the agent tells the gate which address is its own."
+    }
+  },
+  "feedback": {
+    "0x8004baa17c55a88189ae136b182e5fda19de9b63/20880/0": {
+      "commits_claim": {
+        "amount_usd": 0.5,
+        "counterparty": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+        "outcome": "delivered",
+        "service": "x402:advisory"
+      },
+      "author": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
+      "subject_wallets": ["0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe"],
+      "settlement_tx": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "settlement_token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "settled_value": 500000,
+      "block": 51048460,
+      "note": "The shape almost nothing on Base has: a feedback record whose committed hash is the keccak256 of the claim it describes, written by somebody who had actually paid the agent it reviews. Our own measurement over 8,710 NewFeedback events found 92.8% carry a zero hash. This is the rare case, which is why checking it is worth anything."
+    },
+    "0x8004baa17c55a88189ae136b182e5fda19de9b63/31337/3": {
+      "hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "author": "0x0000000000000000000000000000000000C0FFEE",
+      "subject_wallets": ["0x000000000000000000000000000000000000dEaD"],
+      "block": 51048700,
+      "note": "A record that exists and commits some other claim. Anything citing it earns digest_mismatch: the thing onchain describes a different claim than the memory does."
+    },
+    "0x8004baa17c55a88189ae136b182e5fda19de9b63/31337/5": {
+      "commits_claim": {
+        "amount_usd": 9.0,
+        "counterparty": "0x000000000000000000000000000000000000dEaD",
+        "outcome": "delivered",
+        "service": "data:enrichment"
+      },
+      "author": "0x000000000000000000000000000000000000dEaD",
+      "subject_wallets": ["0x000000000000000000000000000000000000dEaD"],
+      "block": 51048710,
+      "note": "A review of yourself, by yourself, with a hash you committed. The digest matches perfectly, which is exactly the problem. Registries are permissionless and a published measurement priced this forgery at $0.0027."
+    },
+    "0x8004baa17c55a88189ae136b182e5fda19de9b63/31337/6": {
+      "commits_claim": {
+        "amount_usd": 7.0,
+        "counterparty": "0x000000000000000000000000000000000000dEaD",
+        "outcome": "delivered",
+        "service": "data:enrichment"
+      },
+      "author": "0x0000000000000000000000000000000000C0FFEE",
+      "subject_wallets": ["0x000000000000000000000000000000000000dEaD"],
+      "block": 51048720,
+      "note": "A third-party review with a matching hash and no payment behind it. Not an accusation -- 98.7 to 100 percent of ERC-8004 feedback looks exactly like this, and most of those authors are not attacking anybody. They simply never paid the agent they reviewed, and an unpaid review is an assertion."
+    }
+  }
+}

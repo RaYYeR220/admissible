@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admissible — your agent's memory is hearsay. Ours is evidence.</title>
+<meta name="description" content="An agent that hires and pays other agents on Base. A memory may not justify moving more money than can be found on chain, moved to the party it vouches for, by somebody who is not that party.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23f0521e'/%3E%3Crect x='7' y='8' width='18' height='8' rx='1.5' fill='%23000' opacity='.35'/%3E%3Crect x='7' y='20' width='18' height='5' rx='1.5' fill='%23fff' opacity='.92'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=panchang@200,300,400,500,600,700,800&amp;display=swap">
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@100,200,300,400,500,700,800,900&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@0,100..900;1,100..900&amp;display=swap">
+<link rel="stylesheet" href="/static/assets/machine.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="bar">
+  <div class="wrap">
+    <p class="mark">Admissible</p>
+    <span class="leg desc">Memory deck &mdash; model AD&middot;1</span>
+    <span class="sp"></span>
+    <span class="status" id="chainChip" data-live="false" title="Where the gate is reading its evidence from">
+      <span class="lamp"></span><span id="chainLabel">reading&hellip;</span>
+    </span>
+    <a class="tgl" href="/app">The record</a>
+    <button class="tgl" id="theme" type="button">Desk lamp</button>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ── 01 · one claim, one CTA, and the object ──────────────────────── -->
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow"><span class="dot"></span><span class="leg">Counterparty memory, in hardware terms</span></span>
+    <h1>Your agent&rsquo;s memory is hearsay. Ours is <em>evidence</em>.</h1>
+    <p class="sub">
+      Admissible hires and pays other agents on Base. Every counterparty is a cartridge, and the
+      deck will not close on one whose memory cannot be re-derived from evidence a stranger can
+      check. <b>Refusal is a mechanical event, not a warning.</b>
+    </p>
+
+    <div class="stagearea" id="heroStage">
+      <div class="shadowmesh"></div>
+      <div class="deck">
+        <div class="deck-inner"></div>
+        <div class="cart"></div>
+      </div>
+    </div>
+
+    <div class="deck-foot">
+      <a class="go" href="/app"><span class="pip"></span>Open the record</a>
+      <span class="hint" id="heroHint">drag the cartridge into the slot</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── 02 · the three tiers, as one object ──────────────────────────── -->
+<section class="band">
+  <div class="wrap">
+    <div class="band-head">
+      <span class="leg">02 / The tiers</span>
+      <h2>Three tiers on one plate. Only two of them may touch money.</h2>
+      <span class="sp"></span>
+      <span class="leg hide-sm">Riveted, not configurable</span>
+    </div>
+
+    <div class="plate" id="plate"></div>
+
+    <div class="cols half" style="margin-top: var(--s5)">
+      <div>
+        <p class="leg">The rule, stated precisely</p>
+        <blockquote class="well" style="margin:0; font-size:15px; line-height:1.55;">
+          A memory may not justify moving more money than can be found on chain, moved to the
+          party it vouches for, by somebody who is not that party.
+        </blockquote>
+      </div>
+      <div>
+        <p class="note" style="max-width:52ch">
+          That sentence is narrower than the one we started with, because we attacked our own gate
+          and the earlier wording overclaimed. A memory can re-derive perfectly and still assert any
+          number, so credit now comes from what actually settled on chain and never from the claim.
+          And ERC-8004 registries are permissionless, so the author of a review was free to be the
+          agent it praised. Both are closed in code, and both are in
+          <a href="/LIMITS.md" style="color:var(--safety)">LIMITS.md</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 03 · how the gate works, shown as the deck refusing ──────────── -->
+<section class="band" id="gate">
+  <div class="wrap">
+    <div class="band-head">
+      <span class="leg">03 / The gate</span>
+      <h2>Eight checks, cheapest first. Most poisoning dies before the first RPC call.</h2>
+      <span class="sp"></span>
+      <span class="leg hide-sm" id="gateSubject">reading the store&hellip;</span>
+    </div>
+
+    <div class="cols wide-left">
+      <div class="stagearea" id="gateStage" style="margin-bottom:0">
+        <div class="shadowmesh"></div>
+        <div class="deck">
+          <div class="deck-inner"></div>
+          <div class="cart"></div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <ol class="panel" id="checks" style="margin:0; padding-left: var(--s4); list-style:none; counter-reset:step"></ol>
+        <p class="note">
+          Steps one to seven cost nothing: no network, no keys. That is what makes running this in
+          front of every decision affordable, and it is why a forged receipt is usually refused
+          before anybody spends an RPC call on it.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 04 · the honest numbers ──────────────────────────────────────── -->
+<section class="band" id="numbers">
+  <div class="wrap">
+    <div class="band-head">
+      <span class="leg">04 / The scorecard</span>
+      <h2>The adversarial corpus, scored offline. Controls count the same as attacks.</h2>
+      <span class="sp"></span>
+      <span class="leg hide-sm" id="cardCmd">python bench/run.py --json</span>
+    </div>
+
+    <div class="numbers" id="cardNumbers">
+      <div><span class="leg">running the bench&hellip;</span></div>
+    </div>
+
+    <div class="cols half" style="margin-top: var(--s5)">
+      <div>
+        <h3>Why the controls matter</h3>
+        <p class="note">
+          A gate that refused everything would score full marks on the attacks alone. The negative
+          controls are sound memories that must be admitted, and a single false refusal fails the
+          run. Both halves are in the exit code.
+        </p>
+        <p class="note" id="redteamNote"></p>
+      </div>
+      <div>
+        <h3>What survives it</h3>
+        <p class="note" id="residueNote">
+          Reputation is still purchasable. It costs face value now instead of $0.0027: one attacker
+          cycling send-$5,000 / review / take-it-back twenty times turns $5,000 of working capital
+          into $100,000 of credit. We publish that rather than hide it.
+        </p>
+        <p class="note">
+          This is Sybil resistance, which this design does not have. The full accounting &mdash;
+          what we found, what we fixed, and the one we could not &mdash; is in
+          <a href="/LIMITS.md" style="color:var(--safety)">LIMITS.md</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 05 · where to read the rest ──────────────────────────────────── -->
+<section class="band" id="read" style="padding-bottom: var(--s6)">
+  <div class="wrap">
+    <div class="band-head">
+      <span class="leg">05 / Read the rest</span>
+      <h2>The limits are a deliverable, not an appendix.</h2>
+    </div>
+    <div class="deck-foot" style="justify-content:flex-start; gap: var(--s3)">
+      <a class="go" href="/LIMITS.md"><span class="pip"></span>Read LIMITS.md</a>
+      <a class="tgl" id="repoLink" href="#" style="padding:14px 18px">Repository</a>
+      <a class="tgl" id="videoLink" href="#" style="padding:14px 18px">Demo video</a>
+      <a class="tgl" href="/app" style="padding:14px 18px">The record</a>
+    </div>
+    <p class="note" style="margin-top: var(--s3)" id="linkNote"></p>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span class="leg">Admissible &middot; counterparty memory</span>
+    <span class="leg">Base &middot; ERC-8004 #20880</span>
+    <span class="leg" id="footChain" style="margin-left:auto">&nbsp;</span>
+  </div>
+</footer>
+
+<script src="/static/assets/deck.js"></script>
+<script src="/static/assets/landing.js"></script>
+</body>
+</html>

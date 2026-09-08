@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admissible — the record</title>
+<meta name="description" content="Every memory the agent holds about a counterparty, each with the gate's verdict attached, and the decision it produces.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23f0521e'/%3E%3Crect x='7' y='8' width='18' height='8' rx='1.5' fill='%23000' opacity='.35'/%3E%3Crect x='7' y='20' width='18' height='5' rx='1.5' fill='%23fff' opacity='.92'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=panchang@200,300,400,500,600,700,800&amp;display=swap">
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@100,200,300,400,500,700,800,900&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@0,100..900;1,100..900&amp;display=swap">
+<link rel="stylesheet" href="/static/assets/machine.css">
+</head>
+<body>
+<a class="skip" href="#deck">Skip to the deck</a>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="mark" href="/">Admissible</a>
+    <span class="leg desc">The record &mdash; slot A</span>
+    <span class="sp"></span>
+    <span class="status" id="chainChip" data-live="false" title="Where the gate is reading its evidence from">
+      <span class="lamp"></span><span id="chainLabel">reading&hellip;</span>
+    </span>
+    <span class="leg" id="deckStatus">SLOT A &mdash; IDLE</span>
+    <button class="tgl" id="theme" type="button">Desk lamp</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ── the rack ─────────────────────────────────────────────────────── -->
+<section class="wrap" style="padding-top: var(--s2)">
+  <div class="band-head" style="margin-bottom: var(--s3)">
+    <span class="leg">01 / The rack</span>
+    <h2 style="font-size:1.1rem">Slot a counterparty. The verdict drives the machine.</h2>
+    <span class="sp"></span>
+    <span class="leg hide-sm">Wear is derived from the real memory count</span>
+  </div>
+  <div class="strip" id="rack" role="group" aria-label="Counterparties"></div>
+</section>
+
+<!-- ── the deck and the decision ────────────────────────────────────── -->
+<section class="wrap" id="deck" style="padding-top: var(--s3)">
+  <div class="cols deck-cols">
+    <div class="stack">
+      <div class="stagearea" id="stage" style="margin-bottom: var(--s3); max-width:none">
+        <div class="shadowmesh"></div>
+        <div class="deck">
+          <div class="deck-inner"></div>
+          <div class="cart"></div>
+        </div>
+      </div>
+      <div class="deck-foot" style="justify-content:space-between">
+        <div class="ask">
+          <label for="ask">Requested</label>
+          <input id="ask" type="number" min="0" step="0.01" value="1.00" inputmode="decimal"
+                 aria-describedby="askNote">
+          <span class="leg">USDC</span>
+          <button class="preset" type="button" data-ask="0.25">0.25</button>
+          <button class="preset" type="button" data-ask="0.50">0.50</button>
+          <button class="preset" type="button" data-ask="2.00">2.00</button>
+          <button class="preset" type="button" data-ask="5.00">5.00</button>
+        </div>
+        <button class="go" id="run" type="button"><span class="pip"></span>Run the gate</button>
+      </div>
+      <p class="hint" id="askNote">the amount is the only thing you choose &middot; everything else is read from the store</p>
+    </div>
+
+    <div class="stack">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="leg">Decision</span>
+          <span class="sp"></span>
+          <span class="leg" id="decisionWhen">&nbsp;</span>
+        </div>
+        <div class="verdictline" id="verdictLine" data-action="" aria-live="polite">
+          <span class="act" id="actionText">&mdash;</span>
+          <span class="leg" id="counterpartyLabel">no counterparty slotted</span>
+        </div>
+        <div class="bar-split" id="split" hidden><i class="unsec"></i><i class="coll"></i></div>
+        <div class="money" id="money"></div>
+        <p class="explain" id="explain">Pick a cartridge from the rack.</p>
+        <div id="blocked"></div>
+        <div class="cites" id="cites"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="leg">Dossier</span>
+          <span class="sp"></span>
+          <span class="leg" id="dossierTier">&nbsp;</span>
+        </div>
+        <div id="dossier" class="note">&mdash;</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── the as-of scrubber ───────────────────────────────────────────── -->
+<section class="wrap" style="padding-top: var(--s5)">
+  <div class="panel scrub">
+    <div class="scrub-head">
+      <span class="leg">02 / As of</span>
+      <h2 style="font-size:1.05rem">Drag time backwards. The decision becomes the one the agent would have made then.</h2>
+      <span class="sp"></span>
+      <span class="leg" id="scrubMode">now</span>
+    </div>
+    <div class="scrub-track" id="scrubTrack" role="slider" tabindex="0"
+         aria-label="Transaction time to replay the decision at"
+         aria-valuemin="0" aria-valuemax="1000" aria-valuenow="1000" aria-valuetext="now"></div>
+    <div class="scrub-read">
+      <span class="leg">Transaction time</span><b id="scrubStamp">now</b>
+      <span class="leg">Memories known</span><b id="scrubKnown">&mdash;</b>
+      <span class="leg">Decision</span><b id="scrubAction">&mdash;</b>
+      <button class="preset" type="button" id="scrubNow">Return to now</button>
+    </div>
+    <p class="note" style="margin-top: var(--s2)">
+      Replay resolves each memory through the supersession chain to the version held at that
+      instant, judges validity windows at that instant, and refuses to let a later flag or a later
+      correction leak backwards. Arrow keys step an hour, page keys a day.
+    </p>
+  </div>
+</section>
+
+<!-- ── the memory read trace ────────────────────────────────────────── -->
+<section class="wrap" style="padding-top: var(--s5)">
+  <div class="panel">
+    <div class="panel-head">
+      <span class="leg">03 / Memory read trace</span>
+      <h2 style="font-size:1.05rem">Every memory recalled, in order, with the clause that decided it.</h2>
+      <span class="sp"></span>
+      <span class="leg" id="traceCount" aria-live="polite">&mdash;</span>
+    </div>
+    <div class="trace" id="trace"></div>
+    <p class="note" style="margin-top: var(--s2)">
+      Refused memories stay in the list at zero weight. Hiding them would hide the attack. A memory
+      admitted but marked <b>counted once</b> cites evidence another memory already drew credit
+      from &mdash; a settlement is worth what it settled, however many rows point at it.
+    </p>
+    <div id="gaps"></div>
+  </div>
+</section>
+
+<!-- ── flagged registry and the vouching graph ──────────────────────── -->
+<section class="wrap" style="padding-top: var(--s5)">
+  <div class="cols half">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="leg">04 / Flagged registry</span>
+        <span class="sp"></span>
+        <span class="leg" id="flagCount">&mdash;</span>
+      </div>
+      <div id="flags"></div>
+      <p class="note" style="margin-top: var(--s3)" id="flagNote"></p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="leg">05 / Vouching graph</span>
+        <span class="sp"></span>
+        <span class="leg" id="graphCount">&mdash;</span>
+      </div>
+      <div class="graph" id="graph"></div>
+      <div class="legend leg">
+        <span><i style="background:var(--anodize)"></i>clean</span>
+        <span><i style="background:var(--safety)"></i>reachable from a flag</span>
+        <span><i style="background:var(--amber-key)"></i>flagged actor</span>
+        <span><i style="background:var(--ink-faint)"></i>memory</span>
+      </div>
+      <p class="note" style="margin-top: var(--s2)">
+        Contamination flows backwards along a vouch and forwards along a sourcing. It marks what a
+        flag can reach. It is reachability, not a verdict &mdash; the gate refuses on evidence, and
+        this is what a human should look at next.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── the anchor ───────────────────────────────────────────────────── -->
+<section class="wrap" style="padding-top: var(--s5); padding-bottom: var(--s6)">
+  <div class="panel">
+    <div class="panel-head">
+      <span class="leg">06 / Anchor</span>
+      <h2 style="font-size:1.05rem">A Merkle root over everything the agent currently holds admissible.</h2>
+      <span class="sp"></span>
+      <span class="leg" id="anchorPublished">&mdash;</span>
+    </div>
+    <div class="money" id="anchor"></div>
+    <p class="note" id="anchorNote" style="margin-top: var(--s2)"></p>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <a class="leg" href="/" style="color:var(--ink-mute)">&larr; Landing</a>
+    <a class="leg" href="/LIMITS.md" style="color:var(--safety)">LIMITS.md</a>
+    <span class="leg" id="footChain" style="margin-left:auto">&nbsp;</span>
+  </div>
+</footer>
+
+<script src="/static/assets/deck.js"></script>
+<script src="/static/assets/app.js"></script>
+</body>
+</html>
