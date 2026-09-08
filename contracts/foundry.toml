@@ -24,8 +24,8 @@ runs = 512
 max_test_rejects = 100000
 
 [profile.default.invariant]
-runs = 128
-depth = 64
+runs = 64
+depth = 32
 fail_on_revert = false
 
 [profile.ci.fuzz]

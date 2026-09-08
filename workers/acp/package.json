@@ -1,0 +1,22 @@
+{
+  "name": "acp-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "tsx src/server.ts",
+    "probe": "tsx src/probe.ts"
+  },
+  "dependencies": {
+    "@virtuals-protocol/acp-node-v2": "0.1.12",
+    "@account-kit/infra": "^4.65.0",
+    "viem": "^2.47.0",
+    "zod": "^3.25.76",
+    "dotenv": "^17.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.10.0"
+  }
+}

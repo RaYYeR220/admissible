@@ -16,9 +16,9 @@ genuinely sound and MUST be admitted. A gate that refuses everything scores
 perfectly against attacks alone and is worthless. False refusals are counted and
 reported with the same weight as missed attacks.
 
-**Family coverage, not volume.** Twelve attack families, each with a distinct
-mechanism and a distinct required verdict. Twelve mechanisms caught is a
-stronger claim than four hundred permutations of one.
+**Family coverage, not volume.** Eleven attack families across twelve cases,
+each with a distinct mechanism and a distinct required verdict. Eleven
+mechanisms caught is a stronger claim than four hundred permutations of one.
 """
 
 from __future__ import annotations
@@ -331,8 +331,9 @@ CASES: list[Case] = [
             actor=OUR_AGENT,
             observed_at="2026-03-01T00:00:00.000Z",
         ),
-        expect=VerdictCode.EVIDENCE_NOT_FOUND,
-        store_state={"journal_silent_before": "2026-09-01T00:00:00.000Z"},
+        expect=VerdictCode.BACKDATED,
+        # We wrote it down today. It says we have held it since March.
+        store_state={"recorded_at": "2026-09-08T20:00:00.000Z"},
     ),
     # --- Negative controls. These MUST be admitted. -----------------------------
     # A gate that refuses everything scores 12/12 on the attacks above and is

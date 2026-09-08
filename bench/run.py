@@ -95,13 +95,13 @@ class StubHistory:
             Envelope(claim=c, provenance=case.envelope.provenance).digest
             for c in state.get("superseded_claims", [])
         } if case.envelope is not None else set()
-        self._begins = state.get("journal_silent_before")
+        self._recorded_at = state.get("recorded_at")
 
     def superseding_digest(self, digest: str) -> str | None:
         return "0x" + "fe" * 32 if digest in self._superseded else None
 
-    def journal_begins_at(self) -> str | None:
-        return self._begins
+    def recorded_at(self, digest: str) -> str | None:
+        return self._recorded_at
 
 
 @dataclass

@@ -26,7 +26,7 @@ most-to-least adversarial:
 2. Did a caught actor assert it?           -> FLAGGED_SOURCE
 3. Has a later record invalidated it?      -> SUPERSEDED
 4. Has its validity window closed?         -> EXPIRED
-5. Does its own history support it?        -> EVIDENCE_NOT_FOUND (backdating)
+5. Do its two clocks agree with ours?       -> BACKDATED
 6. Does it even claim to have evidence?    -> INADMISSIBLE_HEARSAY
 7. Does the chain agree?                   -> the four evidence verdicts
 
@@ -38,6 +38,7 @@ what makes running this in front of every decision affordable.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Callable, Mapping, Protocol, Sequence, runtime_checkable
 
 from .envelope import Envelope, Tier, utcnow
@@ -46,6 +47,12 @@ from .verdicts import Verdict, VerdictCode, admissible, refuse
 #: USDC on Base carries six decimals. The gate compares money in base units, not
 #: in floats, so a claim of 0.25 and a transfer of 250000 have to agree exactly.
 USDC_DECIMALS = 6
+
+#: How far a memory's self-asserted observation time may sit before the moment
+#: this store actually journalled it. Five minutes covers clock skew, a slow
+#: batch write and an agent that observed something and wrote it up after
+#: finishing a task. It does not cover a memory that claims to be weeks old.
+BACKDATE_TOLERANCE_SECONDS = 300.0
 
 #: Tolerance, in base units, when matching a claimed amount against a settled
 #: transfer. Zero by default: an approximate match is not a match. It is
@@ -100,8 +107,12 @@ class HistoryLookup(Protocol):
     def superseding_digest(self, digest: str) -> str | None:
         """The digest of the record that invalidated this one, if any."""
 
-    def journal_begins_at(self) -> str | None:
-        """Earliest moment this store can vouch for, ISO-8601, or None."""
+    def recorded_at(self, digest: str) -> str | None:
+        """When this store actually journalled the memory, ISO-8601, or None.
+
+        This is our clock, not the memory's. The gap between it and the
+        memory's self-asserted ``observed_at`` is the whole backdating check.
+        """
 
 
 class ChainUnreachable(RuntimeError):
@@ -119,12 +130,14 @@ class AdmissionGate:
         *,
         now: Callable[[], str] = utcnow,
         amount_tolerance: int = DEFAULT_AMOUNT_TOLERANCE,
+        backdate_tolerance_seconds: float = BACKDATE_TOLERANCE_SECONDS,
     ) -> None:
         self._chain = chain
         self._flags = flags
         self._history = history
         self._now = now
         self._tolerance = amount_tolerance
+        self._backdate_tolerance = backdate_tolerance_seconds
 
     # -- the whole public surface ------------------------------------------------
 
@@ -219,24 +232,36 @@ class AdmissionGate:
         )
 
     def _check_backdating(self, env: Envelope) -> Verdict | None:
-        """A memory cannot have been held before the store existed.
+        """Does the memory's own account of when we learned it survive contact
+        with when we actually wrote it down?
 
-        Claiming a long track record is free; claiming one this store never
-        journalled is not. This is the cheapest tell we have for a memory
-        injected today wearing an old timestamp.
+        ``observed_at`` is self-asserted -- whoever handed us the memory chose
+        it. The journal timestamp is ours. For anything the agent genuinely
+        observed the two are seconds apart, because it records what it sees as
+        it sees it. A memory injected today claiming to have been held since
+        March has to carry that lie in a field, and the two clocks disagree by
+        months.
+
+        Skipped entirely when the store has no journal record of the memory:
+        that means it is being judged before it was ever written, and a
+        conclusion drawn from a missing record would be a guess.
         """
         if self._history is None:
             return None
-        begins = self._history.journal_begins_at()
-        if begins and env.provenance.observed_at < begins:
-            return refuse(
-                VerdictCode.EVIDENCE_NOT_FOUND,
-                "provenance.observed_at",
-                observed_at=env.provenance.observed_at,
-                journal_begins_at=begins,
-                reason="claimed to be held before this store recorded anything",
-            )
-        return None
+        recorded = self._history.recorded_at(env.digest)
+        if not recorded:
+            return None
+        drift = _seconds_between(env.provenance.observed_at, recorded)
+        if drift is None or drift <= self._backdate_tolerance:
+            return None
+        return refuse(
+            VerdictCode.BACKDATED,
+            "provenance.observed_at",
+            observed_at=env.provenance.observed_at,
+            recorded_at=recorded,
+            drift_seconds=round(drift),
+            reason="claims to have been observed long before this store recorded it",
+        )
 
     def _check_tier(self, env: Envelope) -> Verdict | None:
         """Hearsay never moves money, and a label is not evidence.
@@ -377,6 +402,25 @@ class AdmissionGate:
             registry=evidence.registry,
             feedback_index=evidence.feedback_index,
         )
+
+
+def _seconds_between(earlier: str, later: str) -> float | None:
+    """How many seconds ``later`` sits after ``earlier``, or None if unparseable.
+
+    Unparseable returns None rather than zero, so a malformed timestamp cannot
+    quietly satisfy a check by looking like a perfect match.
+    """
+    a, b = _parse_iso(earlier), _parse_iso(later)
+    if a is None or b is None:
+        return None
+    return (b - a).total_seconds()
+
+
+def _parse_iso(value: str) -> datetime | None:
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (AttributeError, ValueError):
+        return None
 
 
 def _to_base_units(amount: float | int | str, decimals: int = USDC_DECIMALS) -> int:

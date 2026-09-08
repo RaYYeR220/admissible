@@ -321,6 +321,7 @@ _LAUNDERING_CODES = frozenset(
         VerdictCode.COUNTERPARTY_MISMATCH,
         VerdictCode.AMOUNT_MISMATCH,
         VerdictCode.DIGEST_MISMATCH,
+        VerdictCode.BACKDATED,
     }
 )
 

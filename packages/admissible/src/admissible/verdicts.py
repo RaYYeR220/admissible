@@ -26,6 +26,7 @@ class VerdictCode(str, Enum):
     SUPERSEDED = "superseded"
     FLAGGED_SOURCE = "flagged_source"
     EXPIRED = "expired"
+    BACKDATED = "backdated"
     MALFORMED = "malformed"
     CHAIN_UNREACHABLE = "chain_unreachable"
 
@@ -71,6 +72,11 @@ _EXPLANATIONS: dict[VerdictCode, str] = {
     VerdictCode.EXPIRED: (
         "The claim carried a validity window and that window has closed. It is true "
         "history, but it is not current fact."
+    ),
+    VerdictCode.BACKDATED: (
+        "The memory says it was observed long before this store wrote it down. "
+        "Its own two clocks disagree, which is the shape of a record injected now "
+        "and dressed up as old."
     ),
     VerdictCode.MALFORMED: (
         "The memory is not a well-formed provenance envelope, so there is nothing to "

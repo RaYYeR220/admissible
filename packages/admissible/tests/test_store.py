@@ -147,7 +147,9 @@ def test_supersede_archives_the_old_record_and_links_the_chain(store):
     archived = store.archived("terms", "acme-rate")
     assert len(archived) == 1
     assert archived[0]["body"]["claim"]["rate"] == "5"
-    assert old.digest[:12] in archived[0]["archive_reason"]
+    # The reason names what replaced it, so the archive row points forward and
+    # the new record's `supersedes` points back. The chain reads both ways.
+    assert archived[0]["archive_reason"] == f"superseded by {new.digest}"
 
 
 def test_supersede_never_hard_deletes(store):

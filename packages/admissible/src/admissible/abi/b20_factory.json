@@ -1,0 +1,16 @@
+[
+ {
+  "inputs": [{"internalType": "address", "name": "token", "type": "address"}],
+  "name": "isB20",
+  "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [{"internalType": "address", "name": "token", "type": "address"}],
+  "name": "isB20Initialized",
+  "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+  "stateMutability": "view",
+  "type": "function"
+ }
+]
