@@ -1,0 +1,67 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.key
+wallet.json
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/*/dry-run/
+
+# data
+*.db
+*.db-wal
+*.db-shm
+.sibyl-memory/
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# internal / working artifacts — never publish
+_internal/
+*-internal/
+BRIEF.md
+ALTERNATIVES.md
+CLAUDE.md
+AGENTS.md
+.claude/
+.remember/
+MEMORY.md
+superpowers/
+docs/superpowers/
+.agents/
+plans/
+specs/
+ui-prototypes/
+mockups/
+design-ref/
+variants/
+scratch/
+*-backup*
+*.bundle
+
+# foundry deps are vendored via `forge install`, not committed
+contracts/lib/
