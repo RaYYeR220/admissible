@@ -214,19 +214,17 @@ CASES: list[Case] = [
             "x402:settlement",
             actor=SIBYLCAP,
             evidence=Evidence(
-                chain_id=BASE, tx_hash="0x" + "33" * 32, kind="erc8004:feedback"
+                chain_id=BASE,
+                registry="0x8004BAa17C55a88189AE136b182e5fdA19dE9b63",
+                agent_id=20880,
+                feedback_index=3,
+                kind="erc8004:feedback",
             ),
         ),
         expect=VerdictCode.DIGEST_MISMATCH,
-        chain_state={
-            "feedback": {
-                "0x" + "33" * 32: {
-                    # The hash committed onchain is of the ORIGINAL claim.
-                    "feedback_hash": "0x" + "00" * 31 + "01",
-                    "agent_id": 20880,
-                }
-            }
-        },
+        # The hash committed onchain is of the ORIGINAL claim, so it no longer
+        # describes the edited one. No amount of local consistency hides that.
+        chain_state={"feedback_hash": "0x" + "00" * 31 + "01"},
     ),
     # 7. Resurrect a fact that was already invalidated. Non-destructive
     #    supersession is what makes this detectable rather than invisible.

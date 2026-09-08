@@ -1,0 +1,53 @@
+[profile.default]
+src = "src"
+out = "out"
+test = "test"
+script = "script"
+libs = ["lib"]
+remappings = ["forge-std/=lib/forge-std/src/"]
+
+solc_version = "0.8.28"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 20000
+via_ir = false
+
+# Deterministic artifacts: the same source tree produces the same bytecode on any machine,
+# which is what makes source verification reproducible rather than a leap of faith.
+bytecode_hash = "none"
+cbor_metadata = false
+
+gas_reports = ["AdmissibilityAnchor"]
+
+[profile.default.fuzz]
+runs = 512
+max_test_rejects = 100000
+
+[profile.default.invariant]
+runs = 128
+depth = 64
+fail_on_revert = false
+
+[profile.ci.fuzz]
+runs = 4096
+
+[profile.ci.invariant]
+runs = 512
+depth = 128
+
+[rpc_endpoints]
+base = "https://mainnet.base.org"
+base_sepolia = "https://sepolia.base.org"
+
+# Basescan's own API V1 was retired on 2025-08-15. Verification for Base now goes through the
+# unified Etherscan V2 endpoint, which selects the chain with a `chainid` query parameter and
+# accepts a single Etherscan API key for every supported chain.
+[etherscan]
+base = { key = "${ETHERSCAN_API_KEY}", chain = 8453, url = "https://api.etherscan.io/v2/api?chainid=8453" }
+base_sepolia = { key = "${ETHERSCAN_API_KEY}", chain = 84532, url = "https://api.etherscan.io/v2/api?chainid=84532" }
+
+[fmt]
+line_length = 120
+tab_width = 4
+bracket_spacing = false
+int_types = "long"
