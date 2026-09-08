@@ -27,7 +27,7 @@ from admissible_mcp.server import (
     build_server,
 )
 
-from conftest import (  # noqa: E402 - the suite's own fixtures module
+from mcp_fixtures import (  # noqa: E402 - this suite's builders
     COUNTERPARTY,
     OTHER_TX,
     OUR_ADDRESS,

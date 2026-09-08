@@ -6,7 +6,7 @@ from admissible.consolidate import consolidate, summarize
 from admissible.envelope import Envelope, Evidence, Tier
 from admissible.store import AdmissibleStore
 
-from conftest import envelope
+from admissible_fixtures import envelope
 
 CP = "acme.eth"
 

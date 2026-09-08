@@ -7,7 +7,7 @@ import pytest
 from admissible.relations import SOURCED, VOUCHED_FOR, EntityRef, Relations
 from admissible.store import AdmissibleStore
 
-from conftest import envelope
+from admissible_fixtures import envelope
 
 ALICE = "0xAAaA000000000000000000000000000000000001"
 BOB = "0xBbBb000000000000000000000000000000000002"

@@ -18,7 +18,7 @@ from admissible import cli
 from admissible.envelope import Envelope, Evidence, Tier
 from admissible.store import AdmissibleStore
 
-from conftest import envelope  # noqa: E402 - the suite's own fixtures module
+from admissible_fixtures import envelope  # noqa: E402 - the suite's own fixtures module
 
 COUNTERPARTY = "0x4069ef1afc8a9b2a29117a3740fcab2912499fbe"
 STRANGER = "0x000000000000000000000000000000000000dead"

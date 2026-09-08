@@ -13,7 +13,7 @@ from admissible.store import (
 )
 from admissible.verdicts import VerdictCode
 
-from conftest import envelope
+from admissible_fixtures import envelope
 
 
 def test_remember_roundtrips_the_envelope(store):

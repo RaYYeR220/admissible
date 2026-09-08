@@ -23,7 +23,7 @@ from admissible_mcp.server import (
 )
 from admissible_mcp.views import UnverdictedClaim, guard, memory_view
 
-from conftest import COUNTERPARTY, STRANGER, envelope  # noqa: E402
+from mcp_fixtures import COUNTERPARTY, STRANGER, envelope  # noqa: E402
 
 #: A claim written to read like settled fact. Nothing backs it.
 BOAST = {

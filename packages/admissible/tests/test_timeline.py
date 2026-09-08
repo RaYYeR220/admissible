@@ -5,7 +5,7 @@ from __future__ import annotations
 from admissible.envelope import Envelope
 from admissible.timeline import Timeline, as_of, valid_at
 
-from conftest import envelope
+from admissible_fixtures import envelope
 
 T1 = "2026-01-01T00:00:00.000Z"
 T2 = "2026-02-01T00:00:00.000Z"
