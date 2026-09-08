@@ -5,8 +5,14 @@
 Admissible is an agent that hires and pays other agents on Base. What it remembers about a
 counterparty decides whether it pays, escrows, or refuses — and it enforces one rule in code:
 
-> A memory may not justify moving money unless it can be re-derived from evidence that somebody
-> other than its author can check.
+> **A memory may not justify moving more money than can be found on chain, moved to the party it
+> vouches for, by somebody who is not that party.**
+
+That sentence is narrower than the one we started with, and deliberately. "Re-derived from evidence"
+said nothing about *how much* — a memory could re-derive perfectly and still assert any number. And
+"evidence somebody other than its author can check" was not enforced at all: ERC-8004 feedback is
+permissionless, so the author of a review was free to be the agent it praised. Both were found by
+attacking our own gate, and both are fixed rather than reworded. `LIMITS.md` has the full account.
 
 An agent's memory is an attack surface. Anything that can write to it can steer what the agent
 buys, from whom, and at what price. Most agent memory layers accept a claim because it is *in the
@@ -189,12 +195,49 @@ in the source. Admissible reads the events, not the getter.
 
 ---
 
-## Honest limits
+## The scorecard, and what it cost to earn it
 
-`LIMITS.md` is a first-class deliverable, not an appendix: what this gate does not protect against,
-the attacks we found against ourselves, and the ones we could not close. `CLAIMS.md` tags every
-public statement by evidence tier. `MOCKS.md` draws the exact line between real and recorded.
-`PROOF.md` makes every claim a clickable link.
+```
+python bench/run.py
+```
+
+47 memories: **33 attacks across 18 families, and 14 negative controls.** All 33 attacks are refused
+*for the exact expected reason*, all 14 sound memories are admitted, zero false refusals. A gate that
+refuses everything would score 33/33 on the attacks alone, which is why the controls carry equal
+weight and why the exit code fails on either number.
+
+The first version of this scorecard read 12/12 and 5/5 and was worthless — the same hands wrote the
+attacks and the defence. So we attacked it properly. **Twenty findings, nineteen fixed.** Among them:
+
+- `WITNESSED` memories were admitted with no checks at all — no chain call, no evidence, no actor.
+  `amount_usd: Infinity` bought infinite credit.
+- The settled **token** was read nowhere. Any home-made six-decimal ERC-20 counted as dollars.
+- The counterparty had only to match *either* party to a transfer, so paying yourself was history.
+- Validity windows were compared as **strings**. `20260201T000000Z` is a legal ISO-8601 rendering of
+  1 February that sorts *above* `2026-09-08` because `'0' > '-'`, so a window that closed seven
+  months ago read as open.
+- An attacker could **choose a softer refusal**: `EXPIRED` was not treated as forgery, so bolting a
+  closed validity window onto a fabricated receipt turned an outright refusal into an escrow — and
+  the forger was never flagged, so they could retry forever at no cost.
+
+### The honest residue
+
+Reputation is still purchasable. It used to cost **$0.0027**; a published measurement of ERC-8004
+found that is roughly what forging a review costs, and that 98.7–100% of feedback carries no payment
+proof at all. Now an address that is not the agent must actually send the money it wants credit for,
+before the review that cites it, and credit is capped at what moved.
+
+That is a price increase, not a wall. We measured what survives: one attacker cycling
+*send $5,000 → review → take it back* twenty times obtains **$100,000 of credit from $5,000 of
+working capital**, at a few cents of gas per round. We did not patch it, because the obvious patch —
+count each reviewer once — closes nothing (spread the same capital over twenty addresses for the same
+result) while destroying real signal from honest repeat customers. This is Sybil resistance, which
+this design does not have, and a dedup rule dressed up as Sybil resistance is exactly the fix that
+looks closed and is not.
+
+`LIMITS.md` carries all twenty findings, the trade-offs we refused, and six structural limits.
+`CLAIMS.md` tags every public statement by evidence tier. `MOCKS.md` draws the exact line between
+real and recorded. `PROOF.md` makes every claim a clickable link.
 
 ---
 

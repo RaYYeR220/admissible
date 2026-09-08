@@ -33,9 +33,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "packages" / "admis
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from admissible.envelope import Envelope  # noqa: E402
-from admissible.gate import AdmissionGate, ChainUnreachable, SettlementFacts  # noqa: E402
+from admissible.gate import (  # noqa: E402
+    AdmissionGate,
+    ChainUnreachable,
+    FeedbackAttribution,
+    SettlementFacts,
+)
 from admissible.verdicts import VerdictCode  # noqa: E402
-from corpus import CASES, Case, summary  # noqa: E402
+from corpus import CASES, OUR_AGENT, Case, summary  # noqa: E402
 
 
 class StubChain:
@@ -64,6 +69,9 @@ class StubChain:
             recipient=record["to"],
             value=record["value"],
             block=record["block"],
+            # A reverted transaction is a real transaction that moved nothing.
+            # The stub can produce one because the gate has to refuse one.
+            status=record.get("status", 1),
         )
 
     def read_feedback_hash(
@@ -76,6 +84,32 @@ class StubChain:
             # very claim, which is the whole point of filling feedbackHash.
             return self._case.envelope.digest
         return self._state.get("feedback_hash")
+
+    def attribute_feedback(
+        self, registry: str, agent_id: int, feedback_index: int, chain_id: int
+    ) -> FeedbackAttribution | None:
+        """Who wrote the record, and what they had paid the agent when they did.
+
+        A matching digest is only half the answer, so the stub has to be able to
+        produce the other half: an author, the addresses that are the agent, and
+        the settlement behind the review if there is one.
+        """
+        if self._state.get("unreachable"):
+            raise ChainUnreachable("stubbed outage")
+        digest = self.read_feedback_hash(registry, agent_id, feedback_index, chain_id)
+        if digest is None:
+            return None
+        paid = self._state.get("feedback_settlement") or {}
+        return FeedbackAttribution(
+            agent_id=agent_id,
+            feedback_index=feedback_index,
+            author=self._state.get("feedback_author", ""),
+            feedback_hash=digest,
+            subject_wallets=tuple(self._state.get("feedback_subject_wallets", ())),
+            settlement_tx=paid.get("tx"),
+            settlement_token=paid.get("token"),
+            settled_value=paid.get("value", 0),
+        )
 
 
 class StubFlags:
@@ -119,7 +153,17 @@ def run() -> list[Result]:
     results: list[Result] = []
     for case in CASES:
         gate = AdmissionGate(
-            chain=StubChain(case), flags=StubFlags(case), history=StubHistory(case)
+            chain=StubChain(case),
+            flags=StubFlags(case),
+            history=StubHistory(case),
+            # The agent's own wallet. Supplying it is what lets the gate tell
+            # "this settlement happened" from "this settlement happened to us",
+            # which is the difference between a track record and a counterparty
+            # moving money between two addresses it owns.
+            self_address=OUR_AGENT,
+            # Frozen so the corpus does not silently pass or fail as real time
+            # moves through the validity windows the cases declare.
+            now=lambda: "2026-09-08T20:00:00.000Z",
         )
         subject = (
             case.store_state["raw_body"]

@@ -51,7 +51,7 @@ from web3.exceptions import ContractLogicError, TransactionNotFound
 from web3.logs import DISCARD
 
 from .envelope import Evidence
-from .gate import ChainUnreachable, SettlementFacts
+from .gate import ChainUnreachable, FeedbackAttribution, SettlementFacts
 
 __all__ = [
     "BASE_MAINNET",
@@ -60,6 +60,7 @@ __all__ = [
     "BaseChain",
     "ChainConfig",
     "ChainUnreachable",
+    "FeedbackAttribution",
     "FeedbackRecord",
     "Mismatch",
     "SettlementFacts",
@@ -390,6 +391,7 @@ class BaseChain:
         timeout: float = 30.0,
         retries: int = 4,
         backoff: float = 1.0,
+        max_scan_chunks: int = 64,
         http_get: Callable[[str, float], bytes] | None = None,
         web3: Web3 | None = None,
     ) -> None:
@@ -406,6 +408,9 @@ class BaseChain:
         self._retries = max(1, retries)
         self._backoff = backoff
         self._timeout = timeout
+        #: How many 10k-block windows a log scan may walk before it gives up and
+        #: says so. 64 windows is ~640k blocks, about a fortnight of Base.
+        self.max_scan_chunks = max(1, max_scan_chunks)
         self._http_get = http_get or _default_http_get
         self.w3 = web3 or Web3(
             Web3.HTTPProvider(self.rpc_url, request_kwargs={"timeout": timeout})
@@ -737,6 +742,15 @@ class BaseChain:
         because stopping early is the difference between one RPC call and a
         thousand. Public Base endpoints cap ``eth_getLogs`` at a 10,000-block
         range, hence the chunking.
+
+        The interesting case is the record we *do not* find. Scanning the whole
+        registry history is roughly 940 requests against a rate-limited public
+        endpoint, so the scan is bounded by :attr:`max_scan_chunks`. Running out
+        of budget raises :class:`ChainUnreachable` rather than returning
+        ``None``: we did not establish that the record is absent, only that we
+        stopped looking, and reporting the second as the first would let a
+        forged feedback index pass as a merely-missing one. Give ``from_block``
+        when the answer's neighbourhood is known and the scan is one request.
         """
         floor = self.config.registry_genesis_block if from_block is None else int(from_block)
         head = self.block_number()
@@ -745,7 +759,14 @@ class BaseChain:
             topics.append(_topic_address(client))
         address = Web3.to_checksum_address(self.config.reputation_registry)
         end = head
+        scanned = 0
         while end >= floor:
+            if scanned >= self.max_scan_chunks:
+                raise ChainUnreachable(
+                    f"searched {scanned * chunk} blocks back from {head} without finding "
+                    f"feedback #{index} for agent {agent_id}; the record may exist further "
+                    "back, so this is unknown rather than absent"
+                )
             start = max(floor, end - chunk)
             logs = self._call(
                 lambda s=start, e=end: self.w3.eth.get_logs(
@@ -753,6 +774,7 @@ class BaseChain:
                 ),
                 f"eth_getLogs({start}-{end})",
             )
+            scanned += 1
             for log in reversed(logs):
                 decoded = self.reputation.events.NewFeedback().process_log(log)
                 if int(decoded["args"]["feedbackIndex"]) != int(index):
@@ -765,6 +787,8 @@ class BaseChain:
                     "index": int(decoded["args"]["feedbackIndex"]),
                 }
             if start == floor:
+                # We reached the block the registry was deployed in. Nothing
+                # exists below it, so this really is "not there".
                 return None
             end = start - 1
         return None
@@ -811,6 +835,156 @@ class BaseChain:
             lambda: self.reputation.functions.getClients(agent_id).call(),
             f"getClients({agent_id})",
         )
+
+    def agent_addresses(self, agent_id: int) -> tuple[str, ...]:
+        """Every address that *is* this agent, lowercased.
+
+        Owner, registered wallet and the payment wallets the registration
+        declares, in that order and de-duplicated. They are routinely different:
+        agent 20880 keeps its identity NFT at ``0x4069ef1a…`` and settles x402
+        payments from ``0xe3e14118…``. Anything comparing a payment against one
+        of them alone gets the wrong answer about half the time, which is why
+        this returns a set rather than an address.
+
+        The manifest half is the agent's own account of itself and is therefore
+        the least trustworthy part -- but it is only ever used here to *widen*
+        the set of addresses that count as the agent, which can only ever make
+        a self-dealing check stricter.
+        """
+        agent = self.resolve_agent(agent_id)
+        found = [_norm(agent.owner), _norm(agent.wallet), *agent.payment_wallets()]
+        return tuple(dict.fromkeys(a for a in found if a))
+
+    def attribute_feedback(
+        self,
+        registry: str,
+        agent_id: int,
+        feedback_index: int,
+        chain_id: int,
+        *,
+        from_block: int | None = None,
+    ) -> FeedbackAttribution | None:
+        """Who wrote a feedback record, and what they had settled to its subject.
+
+        This is the gate's second ``ChainReader`` hook, and it exists because
+        the first one cannot answer the question that matters. A committed
+        ``feedbackHash`` proves a record was not edited. It says nothing about
+        whether its author was entitled to vouch for anybody, and on a
+        permissionless registry the author is frequently the subject.
+
+        So this resolves three things the digest cannot: the ``clientAddress``
+        indexed on the ``NewFeedback`` log, every address that is the agent
+        under review, and -- if the author is not one of them -- the most recent
+        USDC transfer from author to agent at or before the block the review was
+        written. Payment first, then the review it justifies; a transfer
+        afterwards does not retroactively buy the right to have said something.
+
+        ``None`` only when the record genuinely does not exist. A search that
+        ran out of budget raises :class:`ChainUnreachable`, in keeping with the
+        rest of this module: not finding a payment in the window we could afford
+        to search is not the same as there being none.
+        """
+        if chain_id != self.chain_id:
+            return None
+        if registry and not _same_address(registry, self.config.reputation_registry):
+            return None
+        found = self._find_feedback_log(agent_id, feedback_index, from_block=from_block)
+        if found is None:
+            return None
+
+        author = _norm(found.get("client"))
+        wallets = self.agent_addresses(agent_id)
+        paid: VerifiedSettlement | None = None
+        if author and author not in wallets:
+            # Skipped when the author is the agent: the gate refuses that
+            # outright, and a log scan to confirm a self-review is money wasted.
+            paid = self.find_settlement(author, wallets, before_block=found.get("block"))
+        return FeedbackAttribution(
+            agent_id=agent_id,
+            feedback_index=feedback_index,
+            author=author,
+            feedback_hash=found["feedback_hash"],
+            subject_wallets=wallets,
+            settlement_tx=paid.tx_hash if paid else None,
+            settlement_token=paid.token if paid else None,
+            settled_value=paid.value if paid else 0,
+            block=found.get("block"),
+        )
+
+    def find_settlement(
+        self,
+        payer: str,
+        recipients: Sequence[str],
+        *,
+        token: str | None = None,
+        before_block: int | None = None,
+        chunk: int = 9_999,
+    ) -> VerifiedSettlement | None:
+        """The most recent transfer from ``payer`` to any of ``recipients``.
+
+        Both parties are indexed topics on the ``Transfer`` event, so this is
+        one filtered ``eth_getLogs`` per window rather than a scan of anything.
+        Recipients go in as a single OR-ed topic position, which is what lets an
+        agent's owner, wallet and declared payment wallets all be checked in the
+        same request.
+
+        Bounded the same way :meth:`_find_feedback_log` is, and for the same
+        reason: running out of :attr:`max_scan_chunks` raises
+        :class:`ChainUnreachable` rather than returning ``None``. "I searched a
+        fortnight of blocks and found no payment" is not "this author never
+        paid", and reporting the first as the second would let an unpaid review
+        pass as merely old. Pass ``from_block`` upstream, or raise
+        ``max_scan_chunks``, when deeper history has to be reachable.
+        """
+        token = token or self.config.usdc
+        wanted = [r for r in (_norm(x) for x in recipients) if r]
+        if not token or not _norm(payer) or not wanted:
+            return None
+        head = int(before_block) if before_block is not None else self.block_number()
+        floor = self.config.registry_genesis_block
+        address = Web3.to_checksum_address(token)
+        topics: list[Any] = [
+            TRANSFER_TOPIC,
+            _topic_address(_norm(payer)),
+            [_topic_address(r) for r in wanted],
+        ]
+        end = head
+        scanned = 0
+        while end >= floor:
+            if scanned >= self.max_scan_chunks:
+                raise ChainUnreachable(
+                    f"searched {scanned * chunk} blocks back from {head} without finding a "
+                    f"payment from {payer} to the agent; one may exist further back, so "
+                    "this is unknown rather than absent"
+                )
+            start = max(floor, end - chunk)
+            logs = self._call(
+                lambda s=start, e=end: self.w3.eth.get_logs(
+                    {"address": address, "fromBlock": s, "toBlock": e, "topics": topics}
+                ),
+                f"eth_getLogs({start}-{end})",
+            )
+            scanned += 1
+            for log in reversed(logs):
+                for transfer in decode_transfers([log], token=token):
+                    if transfer.value <= 0:
+                        continue
+                    # A Transfer log only exists in a transaction that succeeded;
+                    # reverted transactions emit none. Status is 1 by definition.
+                    return VerifiedSettlement(
+                        tx_hash=_hex0x(log["transactionHash"]),
+                        token=transfer.token,
+                        sender=transfer.sender,
+                        recipient=transfer.recipient,
+                        value=transfer.value,
+                        block=int(log["blockNumber"]),
+                        chain_id=self.chain_id,
+                        status=1,
+                    )
+            if start == floor:
+                return None
+            end = start - 1
+        return None
 
     # -- settlement -------------------------------------------------------------
 

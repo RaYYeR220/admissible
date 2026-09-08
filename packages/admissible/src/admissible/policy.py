@@ -24,11 +24,12 @@ confident; showing them is what makes it possible to see the attack happening.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Literal, Sequence
 
 from .envelope import Envelope, Tier
-from .verdicts import Verdict, VerdictCode
+from .verdicts import FORGERY_CODES, Verdict, VerdictCode
 
 Action = Literal["pay", "escrow", "refuse"]
 
@@ -42,6 +43,16 @@ STRANGER_CEILING_USD = 0.05
 #: notes can be walked up a ladder one small lie at a time.
 WITNESSED_WEIGHT = 0.25
 
+#: The total credit every WITNESSED memory in a decision may contribute between
+#: them. The gate's docstring has always said the cap on how far a witnessed
+#: memory may move money lives here; until this constant existed, it did not.
+#: ``WITNESSED_WEIGHT`` is a discount, and a discount on an attacker-chosen
+#: number is still an attacker-chosen number: one note reading
+#: ``amount_usd: 1000000`` bought a $250,000 credit line, and one reading
+#: ``Infinity`` bought an unbounded one. A first-hand note nobody else can check
+#: is worth a few dollars of trust, and no more, however many of them there are.
+WITNESSED_CEILING_USD = 5.00
+
 
 @dataclass(frozen=True)
 class Consideration:
@@ -54,7 +65,19 @@ class Consideration:
 
     @property
     def digest(self) -> str:
-        return self.envelope.digest
+        """This memory's digest, or ``""`` when it does not have one.
+
+        A memory refused as MALFORMED can be one whose claim cannot be
+        canonicalised at all -- a non-finite number, a key that is not a string
+        -- and that is frequently *why* it was refused. It still has to appear
+        in the decision record, because a refused memory nobody can see is an
+        attack nobody can see, so the digest degrades to empty rather than
+        raising out of the audit path.
+        """
+        try:
+            return self.envelope.digest
+        except ValueError:
+            return ""
 
     def to_dict(self) -> dict[str, Any]:
         prov = self.envelope.provenance
@@ -129,9 +152,11 @@ class TrustPolicy:
         *,
         stranger_ceiling_usd: float = STRANGER_CEILING_USD,
         witnessed_weight: float = WITNESSED_WEIGHT,
+        witnessed_ceiling_usd: float = WITNESSED_CEILING_USD,
     ) -> None:
         self._stranger_ceiling = stranger_ceiling_usd
         self._witnessed_weight = witnessed_weight
+        self._witnessed_ceiling = witnessed_ceiling_usd
 
     def decide(
         self,
@@ -148,7 +173,11 @@ class TrustPolicy:
         refused ones carry no weight but they are the visible evidence that
         something tried to move this decision and failed.
         """
-        considered = tuple(self._weigh(env, verdict) for env, verdict in judged)
+        # A request that is not a finite positive number is not a request. The
+        # arithmetic below happily released $0.05 against a NaN and paid a
+        # negative amount against a negative one.
+        requested_usd = max(0.0, _as_float(requested_usd))
+        considered = self._weigh_all(judged)
 
         if flagged:
             return Decision(
@@ -257,31 +286,70 @@ class TrustPolicy:
 
     # -- internals ---------------------------------------------------------------
 
-    def _weigh(self, env: Envelope, verdict: Verdict) -> Consideration:
+    def _weigh_all(
+        self, judged: Sequence[tuple[Envelope, Verdict]]
+    ) -> tuple[Consideration, ...]:
+        """Weigh a whole recall, counting each piece of evidence once.
+
+        Weighing memory-by-memory was the single cheapest way to inflate a
+        credit line in this package, and it needed no forgery at all. One
+        genuine $0.25 settlement, stored under four hundred entity names, was
+        four hundred admissible memories and $100 of credit -- and because
+        supersession and de-duplication both key on the digest, re-wording the
+        claim by a single space produced four hundred *distinct* memories citing
+        the same transaction, with the same result.
+
+        So credit is attributed to the evidence, not to the memory that cites
+        it: a settlement is worth what it settled, once, no matter how many
+        rows in the store point at it. Duplicates stay in ``considered`` at zero
+        weight, because hiding them would hide the attack.
+        """
+        out: list[Consideration] = []
+        counted: set[tuple[Any, ...]] = set()
+        witnessed_budget = self._witnessed_ceiling
+        for env, verdict in judged:
+            weight = self._weight_of(env, verdict)
+            if weight > 0:
+                key = _evidence_key(env)
+                if key in counted:
+                    weight = 0.0
+                else:
+                    counted.add(key)
+            if weight > 0 and env.tier is Tier.WITNESSED:
+                # Unattested first-party notes share one budget between them, so
+                # a ladder of small lies tops out instead of compounding.
+                weight = min(weight, max(0.0, witnessed_budget))
+                witnessed_budget -= weight
+            out.append(Consideration(envelope=env, verdict=verdict, weight_usd=weight))
+        return tuple(out)
+
+    def _weight_of(self, env: Envelope, verdict: Verdict) -> float:
         """Credit contributed by one memory. Refused memories contribute nothing.
 
         Note there is no partial credit for a near-miss. A settlement that went
         to the wrong address is not weak evidence of reliability; it is evidence
         of nothing at all, and treating it as a fraction would be exactly the
         ladder an attacker wants.
+
+        For an ATTESTED memory the number comes from the gate's verdict rather
+        than from the claim. They are supposed to be the same number -- the gate
+        refuses when they are not -- but "supposed to" is doing security work
+        there, and the claim is the half an attacker writes.
         """
         if not verdict.admits:
-            return Consideration(envelope=env, verdict=verdict, weight_usd=0.0)
-
-        amount = _as_float(env.claim.get("amount_usd"))
-        if amount <= 0:
-            # A real observation that moved no money -- latency, a delivered
-            # artefact. It is admissible and it is worth reading, but it does not
-            # extend a credit line.
-            return Consideration(envelope=env, verdict=verdict, weight_usd=0.0)
+            return 0.0
 
         if env.tier is Tier.ATTESTED:
-            return Consideration(envelope=env, verdict=verdict, weight_usd=amount)
+            # No verified amount means the gate admitted this memory for a
+            # reason other than a settlement it priced. It informs; it does not
+            # underwrite.
+            return max(0.0, _as_float(verdict.detail.get("verified_amount_usd")))
         if env.tier is Tier.WITNESSED:
-            return Consideration(
-                envelope=env, verdict=verdict, weight_usd=amount * self._witnessed_weight
-            )
-        return Consideration(envelope=env, verdict=verdict, weight_usd=0.0)
+            # A real observation that moved no money -- latency, a delivered
+            # artefact. It is admissible and it is worth reading, but it does
+            # not extend a credit line.
+            return max(0.0, _as_float(env.claim.get("amount_usd"))) * self._witnessed_weight
+        return 0.0
 
     @staticmethod
     def _admitted(considered: Iterable[Consideration]) -> list[Consideration]:
@@ -315,15 +383,11 @@ class TrustPolicy:
 
 #: Refusals that indicate somebody actively tried to move the decision, as
 #: opposed to a memory that is merely thin. These are what get an actor flagged.
-_LAUNDERING_CODES = frozenset(
-    {
-        VerdictCode.EVIDENCE_NOT_FOUND,
-        VerdictCode.COUNTERPARTY_MISMATCH,
-        VerdictCode.AMOUNT_MISMATCH,
-        VerdictCode.DIGEST_MISMATCH,
-        VerdictCode.BACKDATED,
-    }
-)
+#: Defined in ``verdicts`` beside the admitting allowlist so the two sets that
+#: decide what happens to money can be audited side by side -- and so the gate
+#: can consult the same set when it refuses to let a softer verdict stand in
+#: for one of these.
+_LAUNDERING_CODES = FORGERY_CODES
 
 
 def laundering_attempts(decision: Decision) -> list[Consideration]:
@@ -336,11 +400,36 @@ def laundering_attempts(decision: Decision) -> list[Consideration]:
     return [c for c in decision.considered if c.verdict.code in _LAUNDERING_CODES]
 
 
+def _evidence_key(env: Envelope) -> tuple[Any, ...]:
+    """What piece of evidence this memory's credit is actually drawn from.
+
+    A settlement is identified by its transaction, a feedback record by its slot
+    in a registry. Anything with neither can only be identified by itself, so it
+    falls back to the digest -- which still stops the same memory being counted
+    twice, just not two memories citing the same nothing.
+    """
+    ev = env.provenance.evidence
+    if ev.tx_hash:
+        return ("tx", ev.chain_id, str(ev.tx_hash).lower())
+    if ev.feedback_index is not None:
+        return ("feedback", ev.chain_id, str(ev.registry).lower(), ev.agent_id, ev.feedback_index)
+    return ("digest", env.digest)
+
+
 def _as_float(value: Any) -> float:
+    """A finite float, or zero.
+
+    ``float("inf")`` used to survive this, and an infinite credit line pays any
+    request. Anything that is not a number the arithmetic below can survive is
+    worth nothing, which is the only safe reading of a number we cannot read.
+    """
+    if isinstance(value, bool):
+        return 0.0
     try:
-        return float(value)
+        out = float(value)
     except (TypeError, ValueError):
         return 0.0
+    return out if math.isfinite(out) else 0.0
 
 
 def _short(address: str | None) -> str:

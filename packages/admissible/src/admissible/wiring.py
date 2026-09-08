@@ -74,6 +74,7 @@ def build_gate(
     chain: Any | None = None,
     *,
     flags: FlaggedActors | None = None,
+    self_address: str | None = None,
     **kwargs: Any,
 ) -> tuple[AdmissionGate, StoreHistory]:
     """The gate an agent should actually use, plus the history it caches.
@@ -81,12 +82,19 @@ def build_gate(
     The history object is returned rather than hidden so the caller can
     invalidate it after writing -- an agent that flags an actor mid-decision
     needs the next verdict to see the flag.
+
+    ``self_address`` is named here rather than left to ``kwargs`` because
+    omitting it is a security decision and should look like one. Without it the
+    gate can confirm that a settlement involved the counterparty but not that it
+    involved *us*, and a counterparty who moves USDC between two addresses they
+    own produces a real settlement that satisfies the weaker test.
     """
     history = StoreHistory(store)
     gate = AdmissionGate(
         chain=chain,
         flags=flags if flags is not None else FlaggedActors(store),
         history=history,
+        self_address=self_address,
         **kwargs,
     )
     return gate, history

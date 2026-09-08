@@ -36,6 +36,24 @@ class VerdictCode(str, Enum):
 #: it here, so a reviewer can audit the allowlist in one glance.
 ADMITTING_CODES: tuple[VerdictCode, ...] = (VerdictCode.ADMISSIBLE,)
 
+#: Refusals that mean somebody actively tried to move the decision, as opposed
+#: to a memory that is merely thin or merely stale. The decision policy refuses
+#: outright on these rather than escrowing, and the gate will not let a softer
+#: verdict be returned in their place.
+#:
+#: It sits beside :data:`ADMITTING_CODES` on purpose: these two sets are the
+#: only places in the package where a verdict changes what happens to money, and
+#: a reviewer should be able to read both without opening a second file.
+FORGERY_CODES: frozenset[VerdictCode] = frozenset(
+    {
+        VerdictCode.EVIDENCE_NOT_FOUND,
+        VerdictCode.COUNTERPARTY_MISMATCH,
+        VerdictCode.AMOUNT_MISMATCH,
+        VerdictCode.DIGEST_MISMATCH,
+        VerdictCode.BACKDATED,
+    }
+)
+
 _EXPLANATIONS: dict[VerdictCode, str] = {
     VerdictCode.ADMISSIBLE: (
         "The claim was re-derived from onchain evidence and the evidence digest "
