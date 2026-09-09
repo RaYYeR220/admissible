@@ -12,7 +12,7 @@
     "0x5555555555555555555555555555555555555555555555555555555555555555": {
       "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
-      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "to": "0x4069ef1afC8A9b2a29117A3740fCAB2912499fBe",
       "value": 250000,
       "block": 51048200,
       "timestamp": 1786000000,
@@ -21,7 +21,7 @@
     "0x6666666666666666666666666666666666666666666666666666666666666666": {
       "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
-      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "to": "0x4069ef1afC8A9b2a29117A3740fCAB2912499fBe",
       "value": 20000,
       "block": 51048300,
       "timestamp": 1786100000,
@@ -30,7 +30,7 @@
     "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
       "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
-      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "to": "0x4069ef1afC8A9b2a29117A3740fCAB2912499fBe",
       "value": 500000,
       "block": 51048400,
       "timestamp": 1786200000,
@@ -48,7 +48,7 @@
     "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc": {
       "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
-      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "to": "0x4069ef1afC8A9b2a29117A3740fCAB2912499fBe",
       "value": 500000,
       "block": 51048450,
       "timestamp": 1786250000,
@@ -57,7 +57,7 @@
     "0x1111111111111111111111111111111111111111111111111111111111111111": {
       "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
-      "to": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+      "to": "0x4069ef1afC8A9b2a29117A3740fCAB2912499fBe",
       "value": 250000,
       "block": 51048100,
       "timestamp": 1785900000,
@@ -66,7 +66,7 @@
     "0x7777777777777777777777777777777777777777777777777777777777777777": {
       "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "from": "0x000000000000000000000000000000000000dEaD",
-      "to": "0x00000000000000000000000000000000DeadBe3f",
+      "to": "0x00000000000000000000000000000000dEAdBe3f",
       "value": 4000000,
       "block": 51048600,
       "timestamp": 1786400000,
@@ -77,12 +77,12 @@
     "0x8004baa17c55a88189ae136b182e5fda19de9b63/20880/0": {
       "commits_claim": {
         "amount_usd": 0.5,
-        "counterparty": "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe",
+        "counterparty": "0x4069ef1afC8A9b2a29117A3740fCAB2912499fBe",
         "outcome": "delivered",
         "service": "x402:advisory"
       },
       "author": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
-      "subject_wallets": ["0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe"],
+      "subject_wallets": ["0x4069ef1afC8A9b2a29117A3740fCAB2912499fBe"],
       "settlement_tx": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
       "settlement_token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "settled_value": 500000,

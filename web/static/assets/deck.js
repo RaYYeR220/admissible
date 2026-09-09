@@ -593,10 +593,41 @@
     });
   }
 
+  /* ── the mainnet proof chain ──────────────────────────
+     Shared by both surfaces so the two cannot drift: settlement, then the
+     digest recomputed from the claim, then the hash committed on chain, then
+     the anchored root. Steps two to four are the same hash and are drawn as
+     one continuous object. */
+  function proofChain(host, data) {
+    if (!host) return;
+    var same = { digest: 1, feedback: 1, anchor: 1 };
+    host.innerHTML = data.steps.map(function (step, i) {
+      var target = step.link || step.value;
+      var href = step.kind === "tx" ? data.explorer + "/tx/" + target : null;
+      return '<div class="proof-step' + (same[step.key] ? " same" : "") + '">' +
+        '<span class="no">0' + (i + 1) + "</span>" +
+        '<span class="lbl">' + esc(step.label) + "</span>" +
+        '<span class="val">' + esc(step.value) + "</span>" +
+        '<span class="dsc">' + esc(step.detail) + "</span>" +
+        (href
+          ? '<a class="evlink" href="' + esc(href) + '" target="_blank" rel="noreferrer">basescan' +
+            ' <span class="tag">tx</span></a>'
+          : "") +
+        "</div>";
+    }).join("");
+  }
+
+  function check(ok, label) {
+    return '<span class="check ' + (ok ? "yes" : "no") + '"><i></i>' + esc(label) +
+      " &middot; " + (ok ? "true" : "false") + "</span>";
+  }
+
   global.SoftMachine = {
     cartridgeSVG: cartridgeSVG,
     makeDeck: makeDeck,
     wireTheme: wireTheme,
+    proofChain: proofChain,
+    check: check,
     reduced: reduced,
     escape: esc
   };

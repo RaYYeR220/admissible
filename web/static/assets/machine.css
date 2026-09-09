@@ -412,6 +412,81 @@ h3{
 .legend span{ display:inline-flex; align-items:center; gap:6px; }
 .legend i{ width:10px; height:10px; border-radius: var(--r-pill); display:block; }
 
+/* ── the mainnet proof chain ──────────────────────────── */
+.proof-chain{
+  display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: var(--s2);
+  margin-top: var(--s2);
+}
+.proof-step{
+  position:relative; min-width:0;
+  background: var(--graphite); color:#f5f2e9;
+  border-radius: var(--r-ui); padding: var(--s2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), inset 0 -1px 0 rgba(0,0,0,.5);
+}
+/* the rail between plates: this is one object, not four */
+.proof-step + .proof-step::before{
+  content:""; position:absolute; left: calc(var(--s2) * -1); top: 26px;
+  width: var(--s2); height:2px; background: var(--seam);
+}
+.proof-step.same + .proof-step.same::before{ background: var(--anodize); }
+.proof-step .no{ font-family:"Azeret Mono",monospace; font-size:9px; letter-spacing:.14em;
+  color:#f5f2e9; opacity:.38; }
+.proof-step .lbl{ display:block; font-family:"Azeret Mono",monospace; font-size:10px;
+  letter-spacing:.08em; text-transform:uppercase; color:#f5f2e9; opacity:.6; margin:4px 0 8px; }
+.proof-step .val{
+  display:block;
+  font-family:"Azeret Mono",monospace; font-size:11px; line-height:1.45;
+  overflow-wrap:anywhere; color:#f5f2e9;
+}
+.proof-step.same .val{ color: var(--anodize); }
+.proof-step .dsc{ display:block; margin-top:8px; font-size:11.5px; line-height:1.45;
+  color:#f5f2e9; opacity:.55; }
+.proof-step .evlink{
+  display:inline-flex; margin-top: var(--s2); border-color: rgba(245,242,233,.28); color:#f5f2e9;
+}
+.proof-step .evlink:hover{ border-color: rgba(245,242,233,.6); }
+.proof-step .evlink .tag{ color: var(--anodize); }
+.samebar{
+  display:flex; align-items:center; gap: var(--s2); flex-wrap:wrap;
+  margin-top: var(--s2); padding-top: var(--s2); border-top:1px solid var(--seam);
+}
+.check{
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:"Azeret Mono",monospace; font-size:9.5px; letter-spacing:.08em; text-transform:uppercase;
+}
+.check i{ width:9px; height:9px; border-radius:2px; display:block; background: var(--anodize); }
+.check.no{ color: var(--safety); }
+.check.no i{ background: var(--safety); }
+.check.yes{ color: var(--anodize-deep); }
+:root[data-theme="dark"] .check.yes{ color: var(--anodize); }
+
+/* ── counterparty sourcing (Virtuals / ACP) ───────────── */
+.offer{
+  display:grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px var(--s2);
+  align-items:baseline; padding:7px 0; border-top:1px solid var(--seam);
+}
+.offer:first-of-type{ border-top:0; }
+.offer .nm{ font-family:"Azeret Mono",monospace; font-size:11px; color: var(--ink); }
+.offer .wl{ grid-column:1/-1; font-family:"Azeret Mono",monospace; font-size:9.5px;
+  color: var(--ink-faint); overflow-wrap:anywhere; }
+.offer .pr{ font-family:"Azeret Mono",monospace; font-size:11px; color: var(--anodize-deep); white-space:nowrap; }
+:root[data-theme="dark"] .offer .pr{ color: var(--anodize); }
+.offer.hired{ box-shadow: inset 3px 0 0 var(--amber-key); padding-left: var(--s2); }
+
+.steps{ display:flex; flex-direction:column; gap:1px; margin-top: var(--s2); }
+.lifestep{
+  display:grid; grid-template-columns: 12px minmax(0,1fr) auto; gap: var(--s2);
+  align-items:baseline; padding:7px var(--s1); background: var(--ground);
+}
+.lifestep i{ width:9px; height:9px; border-radius: var(--r-pill); display:block; background: var(--seam); }
+.lifestep[data-state="done"] i{ background: var(--anodize); }
+.lifestep[data-state="waiting"] i{ background: var(--amber-key); }
+.lifestep .nm{ font-family:"Azeret Mono",monospace; font-size:10.5px; color: var(--ink); }
+.lifestep .st{ font-family:"Azeret Mono",monospace; font-size:9px; letter-spacing:.1em;
+  text-transform:uppercase; color: var(--ink-faint); }
+.lifestep[data-state="waiting"] .st{ color: var(--safety); }
+.lifestep .dsc{ grid-column:2/-1; font-size:11.5px; color: var(--ink-mute); }
+
 /* ── tier plate (landing, section 02) ─────────────────── */
 .plate{ width:100%; aspect-ratio: 1180 / 460; }
 .plate svg{ width:100%; height:100%; display:block; overflow:visible; }
@@ -427,7 +502,11 @@ h3{
 .cols.wide-left{ grid-template-columns: minmax(0,1.4fr) minmax(0,1fr); }
 .stack{ display:flex; flex-direction:column; gap: var(--s3); min-width:0; }
 .muted{ color: var(--ink-faint); }
-.note{ font-size:12px; line-height:1.5; color: var(--ink-faint); max-width:64ch; }
+/* these paragraphs carry addresses and hashes, which have no break opportunity
+   of their own and take the page with them at 390px */
+.note{ font-size:12px; line-height:1.5; color: var(--ink-faint); max-width:64ch;
+  overflow-wrap:break-word; }
+.explain{ overflow-wrap:break-word; }
 
 /* ── responsive ───────────────────────────────────────── */
 @media (max-width: 1080px){
@@ -455,6 +534,11 @@ h3{
   .detail{ padding-left: var(--s2); }
   .detail dl{ grid-template-columns: minmax(0,1fr); }
   .numbers{ gap: var(--s3); }
+  .proof-chain{ grid-template-columns: minmax(0,1fr); }
+  /* the rail turns vertical when the plates stack, so it is still one object */
+  .proof-step + .proof-step::before{
+    left: 26px; top: calc(var(--s2) * -1); width:2px; height: var(--s2);
+  }
   .graph{ aspect-ratio: 4 / 5; }
   .plate{ aspect-ratio: 620 / 700; }
 }

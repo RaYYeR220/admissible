@@ -292,6 +292,44 @@
     if (window.console) console.warn(err);
   });
 
+  /* ── the executed mainnet run, and where the counterparty came from ── */
+  get("/api/proof").then(function (data) {
+    SM.proofChain($("proofChain"), data);
+    var r = data.recomputed;
+    $("proofChecks").innerHTML = [
+      SM.check(r.digest_matches_published, "recomputed digest = published"),
+      SM.check(r.digest_matches_feedback_hash, "= committed feedbackHash"),
+      SM.check(r.root_matches_anchor, "= anchored merkle root"),
+      SM.check(r.verifies, "verifies against the root")
+    ].join("");
+    $("proofControl").innerHTML = esc(data.control.note) +
+      ' <span class="mono brk">' + esc(data.control.digest.slice(0, 22)) + "&hellip;</span> " +
+      SM.check(data.control.verifies, "verifies");
+  }).catch(function () {
+    var section = $("mainnet");
+    if (section) section.hidden = true;
+  });
+
+  get("/api/sourcing").then(function (data) {
+    var hire = data.hire || {}, agent = data.agent || {};
+    var offering = agent.offering || {};
+    var registry = data.registry || {};
+    $("acpLine").innerHTML =
+      "Our agent is live in the Virtuals registry as <b>" + esc(agent.name || "—") +
+      "</b>, selling <b>" + esc(offering.name || "—") + "</b> at " +
+      esc(offering.price_usdc == null ? "—" : Number(offering.price_usdc).toFixed(2) + " USDC") +
+      ". A read of that registry &mdash; " + (registry.live ? "live" : "recorded") +
+      ", no token and no gas &mdash; is what selects a provider, and it selected <b>" +
+      esc(hire.provider_name || "—") + "</b>. Job #" + esc(String(hire.job_id || "")) +
+      " exists on Base mainnet and its status is <b>" + esc(String(hire.status || "").toUpperCase()) +
+      "</b>: the provider sets the budget and delivers, and at the time of writing it has not. " +
+      "Its outcome would enter memory as WITNESSED, and become ATTESTED only once the settlement " +
+      "is on chain.";
+  }).catch(function () {
+    var el = $("acpLine");
+    if (el) el.textContent = "";
+  });
+
   /* ── the scorecard, run on demand ─────────────────────────────────── */
   var cardLoaded = false;
   function loadCard() {

@@ -194,6 +194,74 @@
     <p class="note" id="anchorNote" style="margin-top: var(--s2)"></p>
   </div>
 </section>
+
+<!-- ── the executed mainnet run ─────────────────────────────────────── -->
+<section class="wrap" style="padding-top: var(--s5)">
+  <div class="panel">
+    <div class="panel-head">
+      <span class="leg">07 / Base mainnet</span>
+      <h2 style="font-size:1.05rem">One hash, in three places, none of it recorded.</h2>
+      <span class="sp"></span>
+      <span class="status" data-live="true" id="proofChip">
+        <span class="lamp"></span><span>base mainnet &middot; executed</span>
+      </span>
+    </div>
+    <p class="note" id="proofLead" style="max-width:74ch">
+      Everything above this panel reads the seeded store against recorded fixtures, and says so.
+      This panel does not: it is the run that actually happened on Base, and the digest below is not
+      copied out of a file &mdash; the server recomputes it from the claim and reports whether it
+      still matches what was published.
+    </p>
+    <div class="proof-chain" id="proofChain"></div>
+    <div class="samebar" id="proofChecks"></div>
+    <div id="proofControl"></div>
+    <p class="note" id="proofNote" style="margin-top: var(--s3)"></p>
+  </div>
+</section>
+
+<!-- ── where the counterparty came from ─────────────────────────────── -->
+<section class="wrap" style="padding-top: var(--s5); padding-bottom: var(--s6)">
+  <div class="panel">
+    <div class="panel-head">
+      <span class="leg">08 / Counterparty sourcing</span>
+      <h2 style="font-size:1.05rem">The registry read is what chose the provider.</h2>
+      <span class="sp"></span>
+      <span class="status" id="acpChip" data-live="false">
+        <span class="lamp"></span><span id="acpChipLabel">reading&hellip;</span>
+      </span>
+    </div>
+
+    <div class="cols half">
+      <div class="stack">
+        <div>
+          <p class="leg">Our agent, live in the Virtuals registry</p>
+          <div id="acpAgent" class="note">&mdash;</div>
+        </div>
+        <div>
+          <p class="leg" id="acpRegistryLabel">Registry read</p>
+          <div id="acpOfferings"></div>
+        </div>
+        <div id="acpMainnet"></div>
+      </div>
+
+      <div class="stack">
+        <div>
+          <p class="leg">The one it hired</p>
+          <div id="acpHire" class="note">&mdash;</div>
+        </div>
+        <div>
+          <p class="leg">Job lifecycle, at the status we actually observed</p>
+          <div class="steps" id="acpLifecycle"></div>
+          <p class="note" id="acpWaiting" style="margin-top: var(--s2)"></p>
+        </div>
+        <div>
+          <p class="leg">What its outcome would be worth</p>
+          <p class="note" id="acpMemory"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 </main>
 
 <footer class="foot">

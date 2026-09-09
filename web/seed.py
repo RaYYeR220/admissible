@@ -61,7 +61,7 @@ from admissible.store import AdmissibleStore  # noqa: E402
 US = "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f"
 US_HANDLE = "admissible-buyer"
 
-SIBYLCAP = "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe"
+SIBYLCAP = "0x4069ef1afC8A9b2a29117A3740fCAB2912499fBe"
 SIBYLCAP_HANDLE = "sibylcap"
 SIBYLCAP_AGENT_ID = 20880
 
@@ -78,7 +78,7 @@ USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
 REPUTATION_REGISTRY = "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63"
 #: A registry anybody can deploy, cited by a memory that wrote its own reviews
 #: into it. Permissionless deployment is the point of the attack.
-ROGUE_REGISTRY = "0x00000000000000000000000000000000BadC0DE5"
+ROGUE_REGISTRY = "0x00000000000000000000000000000000baDc0DE5"
 BASE_CHAIN_ID = 8453
 
 INTERACTION = "interaction"

@@ -8,8 +8,8 @@ Run it:
 Every case is decided offline against stubs built from the case's own declared
 chain and store state, so the scorecard is reproducible by anyone with the repo
 and no keys, no funds and no network. The live counterpart -- the same gate
-pointed at Base mainnet -- lives in ``verify_onchain.py``; this file is the part
-a judge can re-run in ten seconds.
+pointed at Base mainnet -- is ``scripts/live_proof.py``; this file is the part a
+judge can re-run in ten seconds.
 
 Two numbers matter and both are reported:
 

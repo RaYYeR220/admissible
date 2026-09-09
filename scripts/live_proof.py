@@ -14,8 +14,9 @@ genuinely sells x402 services. There is no mock in this path.
     8. anchor a Merkle root over everything the agent now holds admissible
 
 Step 7 is the point. A published measurement found 98.7 to 100 percent of
-ERC-8004 feedback carries no payment proof; our own scan of 8,710 events on Base
-found 92.8 percent commit a zero hash. The registry cannot check it for you --
+ERC-8004 feedback carries no payment proof; our own scan of 8,690 events on Base
+found 92.8 percent commit a zero hash (``scripts/measure_feedback.py`` re-runs
+it, reads only, no key). The registry cannot check it for you --
 ``readFeedback`` does not even return the hash, which is why our reader parses
 the ``NewFeedback`` event instead. So a feedback record that both carries a real
 digest and has a settled payment behind it is a different kind of object from

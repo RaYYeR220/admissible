@@ -66,6 +66,8 @@ by `admissible` at request time. No outcome is stored in the seed.
 | `GET /api/timeline/{category}/{name}?as_of=` | every recoverable version, the one held at `as_of`, and the versions that did not survive |
 | `GET /api/anchor` | the Merkle root over what the gate admits right now, its leaf count and watermark |
 | `GET /api/stream` | the same decision as Server-Sent Events, one frame per memory |
+| `GET /api/proof` | the executed Base mainnet run, with the digest **recomputed** rather than transcribed |
+| `GET /api/sourcing` | our agent in the Virtuals registry, a live registry read, and the ACP job we hired |
 | `GET /api/scorecard` | the offline adversarial corpus, scored by running `bench/run.py` |
 | `GET /api/site` | the rule, the chain label, and the off-site links (`null` when unpublished) |
 | `GET /LIMITS.md` | the limits file, served from the repository root |
@@ -76,6 +78,42 @@ turns the pacing off.
 
 The server is read-only. It opens the store, calls the package and renders the
 answer; nothing on either page writes a memory, raises a flag or moves money.
+
+## The two panels that are not the demo store
+
+The deck, the trace and the graph read the seeded store against recorded
+fixtures, and say `offline fixtures` while they do it. Two panels do not, and
+they are labelled separately so neither borrows the other's credibility.
+
+**Base mainnet (`/api/proof`, section 07 on the record, section 04 on the
+landing).** The executed run from `PROOF.md`: $0.25 USDC settled to ERC-8004
+agent #20880, the memory written about it, that digest committed as a
+`feedbackHash`, and the same digest anchored under a Merkle root in a verified
+contract. The digest is **not copied out of the file** — `web/fixtures/mainnet-proof.json`
+carries the *claim*, and the server runs `keccak256` over its canonical form with
+the same function the gate uses, hashes that into a Merkle leaf, builds the
+one-leaf tree, and reports whether each result equals what was published. If the
+fixture ever drifts from what was executed, the panel says `false` in public
+instead of quietly agreeing with itself. The negative control — a well-formed
+digest this agent never held, which fails against the same root — is rendered
+beside it, because without it the green line proves nothing.
+
+**Counterparty sourcing (`/api/sourcing`, section 08).** Prefers the ACP bridge
+in `workers/acp/` on `:8787` and falls back to `web/fixtures/virtuals-acp.json`,
+naming which it used. It reports *which registry answered*: the bridge can be
+pointed at the mainnet registry or the dev one, and a dev-registry read presented
+as a mainnet read would be the exact dishonesty this product argues against. When
+the live read is not mainnet, the recorded mainnet read is carried beside it
+rather than in place of it.
+
+The ACP job is rendered at the status it is actually in. Job `77820` on chain
+8453 is **open**: the provider sets the budget and delivers, and at the time of
+writing it has not. The lifecycle shows one step done, one waiting and three
+pending. Nothing draws a completed job we did not observe.
+
+`pnpm serve` inside `workers/acp/` starts the bridge; without it the panel
+degrades to the recorded values with the label `acp bridge offline · recorded`,
+never to a spinner or a blank.
 
 ## Configuration
 
@@ -90,6 +128,8 @@ runs against the fixtures and says so.
 | `ADMISSIBLE_SELF_ADDRESS` | the wallet the agent pays from; without it the gate cannot tell a settlement *to us* from a settlement between two addresses the counterparty owns |
 | `ADMISSIBLE_ANCHOR_FILE` | a deployment artefact for the published anchor |
 | `ADMISSIBLE_TRACE_DELAY_MS` | pacing of the SSE trace, in milliseconds |
+| `ACP_WORKER_URL` | the ACP bridge (default `http://127.0.0.1:8787`) |
+| `ACP_WORKER_TIMEOUT` | seconds to wait for it before falling back to recorded values |
 | `ADMISSIBLE_REPO_URL`, `ADMISSIBLE_VIDEO_URL` | landing links; unset renders as unavailable rather than as a guess |
 
 ## The demo, in ninety seconds

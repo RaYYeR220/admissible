@@ -287,6 +287,12 @@ def live_chain(rpc_url: str | None = None) -> Any:
     Raises ``RuntimeError`` with an actionable message rather than an
     ``ImportError`` traceback, because the caller who asked for ``--live`` needs
     to know whether the problem is the module, the RPC or the network.
+
+    The endpoint comes from ``BASE_RPC_URL``, which is the name every other
+    surface in this repository reads -- ``admissible.cli``, the MCP server,
+    ``scripts/live_proof.py`` and the web server. ``BASE_RPC`` is still honoured
+    as a fallback because this function used to read only that; with neither
+    set, ``admissible.chain`` supplies its own default endpoint.
     """
     try:
         from admissible import chain as chain_module  # noqa: PLC0415
@@ -296,7 +302,7 @@ def live_chain(rpc_url: str | None = None) -> Any:
             f"{exc}. Run without --live to use the recorded fixtures."
         ) from exc
 
-    url = rpc_url or os.environ.get("BASE_RPC")
+    url = rpc_url or os.environ.get("BASE_RPC_URL") or os.environ.get("BASE_RPC")
     for factory_name in ("BaseChain", "ChainReader", "build_chain", "chain_reader"):
         factory = getattr(chain_module, factory_name, None)
         if factory is None:

@@ -124,11 +124,46 @@
   </div>
 </section>
 
-<!-- ── 04 · the honest numbers ──────────────────────────────────────── -->
+<!-- ── 04 · the run that actually happened ──────────────────────────── -->
+<section class="band" id="mainnet">
+  <div class="wrap">
+    <div class="band-head">
+      <span class="leg">04 / Base mainnet</span>
+      <h2>One hash, in three places. None of this one is recorded.</h2>
+      <span class="sp"></span>
+      <span class="status hide-sm" data-live="true"><span class="lamp"></span><span>executed</span></span>
+    </div>
+
+    <p class="sub" style="margin:0 0 var(--s3); max-width:74ch; text-align:left">
+      The deck above runs against recorded fixtures so that anyone can see the argument with no key,
+      no funds and no network. This did not: $0.25 of USDC settled to ERC-8004 agent #20880, the
+      memory written about it, that memory&rsquo;s digest committed as an ERC-8004
+      <code>feedbackHash</code>, and the same digest anchored under a Merkle root in a verified
+      contract. The digest below is recomputed from the claim on every request rather than copied
+      out of a file.
+    </p>
+
+    <div class="proof-chain" id="proofChain"></div>
+    <div class="samebar" id="proofChecks"></div>
+
+    <div class="cols half" style="margin-top: var(--s4)">
+      <div>
+        <h3>The negative control</h3>
+        <p class="note" id="proofControl"></p>
+      </div>
+      <div>
+        <h3>Sourced from the live registry</h3>
+        <p class="note" id="acpLine"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 05 · the honest numbers ──────────────────────────────────────── -->
 <section class="band" id="numbers">
   <div class="wrap">
     <div class="band-head">
-      <span class="leg">04 / The scorecard</span>
+      <span class="leg">05 / The scorecard</span>
       <h2>The adversarial corpus, scored offline. Controls count the same as attacks.</h2>
       <span class="sp"></span>
       <span class="leg hide-sm" id="cardCmd">python bench/run.py --json</span>
@@ -169,7 +204,7 @@
 <section class="band" id="read" style="padding-bottom: var(--s6)">
   <div class="wrap">
     <div class="band-head">
-      <span class="leg">05 / Read the rest</span>
+      <span class="leg">06 / Read the rest</span>
       <h2>The limits are a deliverable, not an appendix.</h2>
     </div>
     <div class="deck-foot" style="justify-content:flex-start; gap: var(--s3)">

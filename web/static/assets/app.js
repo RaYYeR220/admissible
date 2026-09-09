@@ -671,6 +671,118 @@
       "computes and says plainly that nothing has been published.");
   }
 
+  /* ── the executed mainnet run ─────────────────────────────────────── */
+  function renderProof(data) {
+    SM.proofChain($("proofChain"), data);
+    var check = SM.check;
+    var r = data.recomputed;
+    document.getElementById("proofChecks").innerHTML = [
+      check(r.digest_matches_published, "recomputed digest = published"),
+      check(r.digest_matches_feedback_hash, "= committed feedbackHash"),
+      check(r.root_matches_anchor, "= anchored merkle root"),
+      check(r.verifies, "verifies against the root")
+    ].join("");
+
+    document.getElementById("proofControl").innerHTML =
+      '<div class="blocked" style="border-color:var(--seam);background:none;color:var(--ink-mute)">' +
+      '<b style="color:var(--ink)">Negative control</b>' +
+      esc(data.control.note) +
+      '<div class="mono brk" style="margin-top:var(--s1);color:var(--ink)">' +
+      esc(data.control.digest) + "</div>" +
+      '<div style="margin-top:var(--s1)">' + check(data.control.verifies, "verifies against the same root") +
+      "</div></div>";
+
+    document.getElementById("proofNote").textContent =
+      data.contract.name + " " + data.contract.address + " — verified on Basescan. " +
+      data.note + " Reproduce: " + data.reproduce;
+  }
+
+  /* ── counterparty sourcing: the live Virtuals registry, and the hire ─ */
+  function renderSourcing(data) {
+    var chip = $("acpChip"), live = !!(data.worker && data.worker.reachable);
+    chip.setAttribute("data-live", String(live));
+    $("acpChipLabel").textContent = live
+      ? "acp bridge live" + (data.worker.auth_ready ? " · authenticated" : "")
+      : "acp bridge offline · recorded";
+    chip.title = live ? data.worker.url : (data.worker && data.worker.error) || "";
+
+    var agent = data.agent || {};
+    var offering = agent.offering || {};
+    $("acpAgent").innerHTML =
+      '<dl style="display:grid;grid-template-columns:minmax(96px,auto) 1fr;gap:4px var(--s2);margin:0">' +
+      row("agent", (agent.name || "—") + "  ·  " + (agent.id || "")) +
+      row("wallet", agent.wallet || "—") +
+      row("offering", (offering.name || "—") + "  ·  " + fmtPrice(offering.price_usdc)) +
+      row("builder code", agent.builder_code || "—") +
+      "</dl>" +
+      '<p class="leg" style="margin-top:var(--s1)">source: ' + esc(data.agent_source) + "</p>";
+
+    var registry = data.registry || {};
+    $("acpRegistryLabel").textContent =
+      "Registry read — " + (registry.live ? "live" : "recorded") + " · " +
+      (registry.network || "") + " · " + (registry.endpoint || "");
+    $("acpOfferings").innerHTML = (data.offerings || []).map(function (o) {
+      return offerRow(o, false);
+    }).join("") || '<p class="note">no offerings returned</p>';
+
+    var mainnet = data.mainnet_sample;
+    $("acpMainnet").innerHTML = mainnet
+      ? '<p class="leg">Also recorded — ' + esc(mainnet.endpoint || "") + " · base mainnet · " +
+        esc(mainnet.recorded_at || "") + "</p>" +
+        (mainnet.results || []).map(function (o) { return offerRow(o, false); }).join("") +
+        '<p class="note" style="margin-top:var(--s1)">The bridge above is configured for the ' +
+        "testnet registry, so its read is labelled as such. The mainnet read is carried beside it " +
+        "rather than in place of it.</p>"
+      : "";
+
+    var hire = data.hire || {};
+    $("acpHire").innerHTML =
+      offerRow({
+        name: hire.provider_name, wallet: hire.provider,
+        offering: hire.offering, price_usdc: hire.price_usdc
+      }, true) +
+      '<dl style="display:grid;grid-template-columns:minmax(96px,auto) 1fr;gap:4px var(--s2);margin:var(--s2) 0 0">' +
+      row("job", "#" + hire.job_id + "  ·  chain " + hire.chain_id + "  ·  " + hire.protocol) +
+      row("status", String(hire.status || "").toUpperCase()) +
+      row("requirement", JSON.stringify(hire.requirement || {})) +
+      row("verify", hire.verify || "") +
+      "</dl>" +
+      '<div class="links" style="margin-top:var(--s2)">' +
+      (hire.funding_tx
+        ? '<a class="evlink" href="https://basescan.org/tx/' + esc(hire.funding_tx) +
+          '" target="_blank" rel="noreferrer">funding ' + fmtPrice(hire.funding_usdc) +
+          ' <span class="tag">tx</span></a>' : "") +
+      (hire.gas_tx
+        ? '<a class="evlink" href="https://basescan.org/tx/' + esc(hire.gas_tx) +
+          '" target="_blank" rel="noreferrer">gas <span class="tag">tx</span></a>' : "") +
+      "</div>";
+
+    $("acpLifecycle").innerHTML = (data.lifecycle || []).map(function (s) {
+      return '<div class="lifestep" data-state="' + esc(s.state) + '">' +
+        "<i></i><span class=\"nm\">" + esc(s.step) + "</span>" +
+        '<span class="st">' + esc(s.state) + "</span>" +
+        '<span class="dsc">' + esc(s.detail) + "</span></div>";
+    }).join("");
+
+    $("acpWaiting").textContent =
+      "Waiting on " + (hire.waiting_on || "the provider") + ". " + (hire.note || "");
+    var memory = data.into_memory || {};
+    $("acpMemory").textContent = memory.note || "";
+  }
+
+  function offerRow(o, hired) {
+    return '<div class="offer' + (hired ? " hired" : "") + '">' +
+      '<span class="nm">' + esc(o.name || "—") +
+      (o.offering ? '  <span class="muted">' + esc(o.offering) + "</span>" : "") + "</span>" +
+      '<span class="pr">' + fmtPrice(o.price_usdc) + "</span>" +
+      '<span class="wl">' + esc(o.wallet || "") + "</span></div>";
+  }
+
+  function fmtPrice(v) {
+    if (v === null || v === undefined) return "—";
+    return Number(v) === 0 ? "free" : Number(v).toFixed(2) + " USDC";
+  }
+
   /* ── running a decision ───────────────────────────────────────────── */
   function select(cp) {
     state.current = cp;
@@ -825,4 +937,10 @@
   get("/api/flags").then(renderFlags).catch(function () { });
   get("/api/graph").then(renderGraph).catch(function () { });
   get("/api/anchor").then(renderAnchor).catch(function () { });
+  get("/api/proof").then(renderProof).catch(function () {
+    $("proofNote").textContent = "PROOF.md is not in this checkout, so this panel has nothing to show.";
+  });
+  get("/api/sourcing").then(renderSourcing).catch(function () {
+    $("acpChipLabel").textContent = "sourcing unavailable";
+  });
 })();

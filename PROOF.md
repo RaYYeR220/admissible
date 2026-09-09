@@ -14,6 +14,15 @@ PRIVATE_KEY=0x...  ANCHOR_ADDRESS=0x90c82f9711935B649a80d6dDDFc0C3E21a0D66FC \
 Without `--execute` it reads and stops before spending. With it, one run costs $0.25 plus a few
 cents of gas.
 
+**Every number below was transcribed by hand, and there is no `PROOF.json` in this repository to
+diff it against.** The script writes one — `scripts/live_proof.py:237`, at the end of a successful
+`--execute` run — and it is not gitignored, but the run that produced the transactions below
+predates that write and the artefact was never committed. Producing one now means spending real
+USDC again, so we have not manufactured a file and called it output. Everything here is instead
+checkable at its source: each transaction is a Basescan link, and the contract reads in step 5 are
+one `cast call` away. If you re-run `--execute` yourself, `PROOF.json` lands in the repository root
+and is the machine-written version of this page.
+
 ---
 
 ## The contract
@@ -88,10 +97,20 @@ in step 2. The three are one object.
 getter does not return it. The commitment exists only in the `NewFeedback` event. A verifier using
 the documented interface is structurally unable to check what a score was about.
 
-Our own scan of 8,710 `NewFeedback` events over the 300,000 blocks to 51,055,657 found **92.8% commit
-a zero hash**. One agent emits 7,893 of those; excluding it, 23.6% of 817. Weighted by agent, **61 of
-132 (46.2%) have never received a hashed feedback**. All three numbers are in the source, because
-they say different things.
+Our own scan of 8,690 `NewFeedback` events over the 300,000 blocks to 51,055,657 found **8,068 of
+them — 92.8% — commit a zero hash**. One agent (#25975) emits 7,874 of those; excluding it, 194 of
+the remaining 816, or 23.8%. Weighted by agent, **61 of 132 (46.2%) have never received a hashed
+feedback**. Three numbers because they say different things, and all three come out of one command:
+
+```bash
+python scripts/measure_feedback.py        # reads only, no key
+```
+
+The window is pinned in the script, so the answer is the same next month as it was above. The run
+takes between half a minute and a few minutes: public Base endpoints cap the span of a single
+`eth_getLogs` and move that cap without notice, so the scan narrows its window when it is refused
+and keeps going. The counts are identical at spans of 10,000, 5,000, 2,500 and 2,000 blocks; only
+the number of calls changes.
 
 ### 5. The anchor
 
@@ -130,7 +149,8 @@ The second line is the negative control. Without it the first proves nothing.
 | job id | `77820`, protocol v2, chain 8453 |
 | client | `0x7a896BFC91F1D184B6eb91980A1C6d25219E097F` (our agent) |
 | provider | `0xD535a8828FFd79c12622313cb55e37d86302E0DE` (`Knos`, `answer_a_question_from_my_memory`, 0.01 USDC) |
-| funding | [`0x3c0a47deed0897fcc46c72db052edd4f61be58ae8a75eba3e0015a65fc214e44`](https://basescan.org/tx/0x3c0a47deed0897fcc46c72db052edd4f61be58ae8a75eba3e0015a65fc214e44) (0.05 USDC) and [`0xdff86ad0e090f95f56b470de539d3c916aee3f614f4e0a9d193376c7b113ed5d`](https://basescan.org/tx/0xdff86ad0e090f95f56b470de539d3c916aee3f614f4e0a9d193376c7b113ed5d) (gas) |
+| agent wallet funded | [`0x3c0a47de…14e44`](https://basescan.org/tx/0x3c0a47deed0897fcc46c72db052edd4f61be58ae8a75eba3e0015a65fc214e44) (0.05 USDC) and [`0xdff86ad0…3ed5d`](https://basescan.org/tx/0xdff86ad0e090f95f56b470de539d3c916aee3f614f4e0a9d193376c7b113ed5d) (gas) |
+| job escrow | **none — the provider has not set a budget, so no escrow exists** |
 
 ```
 acp job history --job-id 77820 --chain-id 8453
@@ -143,6 +163,9 @@ We hired a memory agent, which is the shape the product is about. **Whether it c
 to decide** — the provider sets the budget and delivers, and at the time of writing it has not. The
 job exists on chain and the history above is reproducible with one command; we are not going to
 describe a completed lifecycle we did not observe.
+
+To be exact about the two hashes above: both fund the **agent wallet**, and neither is a job escrow.
+Job `77820` is verifiable through `acp job history`, not through either transaction.
 
 `workers/acp/` also reads the live Virtuals registry over the public search API and returns real
 priced offerings; that read is what selected this provider. See `workers/acp/README.md` for what is

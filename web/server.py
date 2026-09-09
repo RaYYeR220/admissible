@@ -45,11 +45,12 @@ from fastapi.responses import (  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel, Field  # noqa: E402
 
-from web import DEFAULT_DB, REPO_ROOT, STATIC  # noqa: E402
+from web import DEFAULT_DB, FIXTURES, REPO_ROOT, STATIC  # noqa: E402
 from web.recorded import open_chain  # noqa: E402
 
-from admissible.anchor import commit  # noqa: E402
-from admissible.envelope import Envelope, Tier, utcnow  # noqa: E402
+from admissible.anchor import build_tree, commit, leaf_of  # noqa: E402
+from admissible.envelope import digest_of  # noqa: E402
+from admissible.envelope import Envelope, Tier, utcnow  # noqa: E402  (digest_of above)
 from admissible.flagged import FlaggedActors, _norm_actor  # noqa: E402
 from admissible.gate import AdmissionGate  # noqa: E402
 from admissible.policy import Decision, TrustPolicy  # noqa: E402
@@ -951,6 +952,233 @@ def _published_anchor() -> dict[str, Any] | None:
             except (OSError, ValueError):
                 continue
     return None
+
+
+#: Where the ACP bridge listens. `workers/acp/` serves the live public Virtuals
+#: registry search on this port; the panel falls back to recorded values, and
+#: says which it used, rather than spinning.
+ACP_WORKER = os.environ.get("ACP_WORKER_URL", "http://127.0.0.1:8787")
+#: Generous, because the bridge re-authenticates on its first call after idling
+#: and that takes about five seconds. A bridge that is simply not running fails
+#: instantly with a refused connection, so the fallback stays immediate.
+ACP_TIMEOUT = float(os.environ.get("ACP_WORKER_TIMEOUT", "12"))
+
+
+@app.get("/api/proof")
+def proof() -> JSONResponse:
+    """The Base mainnet run, re-derived rather than transcribed.
+
+    Every other endpoint here reads the seeded store against recorded fixtures.
+    This one is about the executed run on chain, and it is labelled as such: the
+    demo store stays ``offline fixtures`` and does not borrow this.
+
+    What makes it worth serving at all is that the digest is not copied out of
+    ``PROOF.md``. The claim is, and the server hashes it -- ``keccak256`` over the
+    canonical claim, the same function the gate uses -- then hashes that into a
+    Merkle leaf and builds the one-leaf tree. Three numbers come out, and the
+    page shows whether each equals what was published on Base. If this file ever
+    drifts from what was executed, the panel disagrees with itself in public
+    instead of quietly agreeing.
+    """
+    path = FIXTURES / "mainnet-proof.json"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="no mainnet proof fixture in this checkout")
+    record = json.loads(path.read_text(encoding="utf-8"))
+
+    computed = digest_of(record["claim"])
+    tree = build_tree([computed])
+    control = digest_of(record["control_claim"])
+    published = record["published_digest"]
+    anchor = record["anchor"]
+
+    steps = [
+        {
+            "key": "settlement",
+            "label": "Settled on Base",
+            "value": record["settlement"]["tx"],
+            "kind": "tx",
+            "detail": f"{record['settlement']['value']} USDC base units to "
+            f"{record['settlement']['to']}",
+        },
+        {
+            "key": "digest",
+            "label": "Memory digest, recomputed here",
+            "value": computed,
+            "kind": "hash",
+            "detail": "keccak256 over the canonical claim, by the same function the gate uses",
+        },
+        {
+            "key": "feedback",
+            "label": "Committed as feedbackHash",
+            "value": record["feedback"]["feedback_hash"],
+            "kind": "tx",
+            "link": record["feedback"]["tx"],
+            "detail": f"ERC-8004 record in {record['feedback']['registry']}",
+        },
+        {
+            "key": "anchor",
+            "label": "Anchored as the Merkle root",
+            "value": tree.root_hex,
+            "kind": "tx",
+            "link": anchor["tx"],
+            "detail": f"{anchor['leaves']} leaf, as of {anchor['as_of']}",
+        },
+    ]
+
+    return _no_store(
+        {
+            "generated_at": utcnow(),
+            "chain": {"chain": record["chain"], "chain_id": record["chain_id"], "live": True},
+            "explorer": record["explorer"],
+            "contract": record["contract"],
+            "agent": record["agent"],
+            "settlement": record["settlement"],
+            "claim": record["claim"],
+            "verdict": record["verdict"],
+            "feedback": record["feedback"],
+            "anchor": anchor,
+            "steps": steps,
+            "recomputed": {
+                "digest": computed,
+                "leaf": "0x" + leaf_of(computed).hex(),
+                "root": tree.root_hex,
+                "proof": tree.proof_hex(computed),
+                "digest_matches_published": computed.lower() == published.lower(),
+                "digest_matches_feedback_hash": computed.lower()
+                == record["feedback"]["feedback_hash"].lower(),
+                "root_matches_anchor": tree.root_hex.lower() == anchor["root"].lower(),
+                "verifies": tree.verify(computed, tree.proof(computed)),
+            },
+            "control": {
+                "claim": record["control_claim"],
+                "digest": control,
+                "leaf": "0x" + leaf_of(control).hex(),
+                "verifies": tree.verify(control, []),
+                "note": record["control_note"],
+            },
+            "reproduce": record["reproduce"],
+            "source": record["source"],
+            "note": record["note"],
+        }
+    )
+
+
+@app.get("/api/sourcing")
+def sourcing() -> JSONResponse:
+    """Where the counterparty came from: the live Virtuals registry, and the hire.
+
+    Prefers the ACP bridge in ``workers/acp/`` and falls back to recorded values
+    with the fallback named in the response. It reports which registry answered,
+    because the bridge can be pointed at either the mainnet registry or the dev
+    one, and a dev-registry read presented as a mainnet read would be a lie the
+    rest of this product exists to argue against.
+
+    The job is reported at the status it is actually in. It is ``open``: the
+    provider sets the budget and delivers, and at the time of writing it has not.
+    """
+    path = FIXTURES / "virtuals-acp.json"
+    recorded = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    worker: dict[str, Any] = {"url": ACP_WORKER, "reachable": False, "error": None}
+    live_agent: dict[str, Any] | None = None
+    live_offerings: list[dict[str, Any]] = []
+    registry: dict[str, Any] | None = None
+
+    health = _acp_get("/health")
+    if isinstance(health, dict) and health.get("ok"):
+        data = health.get("data") or {}
+        chain = data.get("chain") or {}
+        auth = data.get("auth") or {}
+        worker.update(reachable=True, chain=chain, auth_ready=bool(auth.get("ready")))
+        agent = auth.get("agent") or {}
+        if agent:
+            offering = (agent.get("offerings") or [{}])[0]
+            live_agent = {
+                "name": agent.get("name"),
+                "id": agent.get("id"),
+                "wallet": agent.get("walletAddress"),
+                "builder_code": agent.get("builderCode"),
+                "offering": {
+                    "name": offering.get("name"),
+                    "id": offering.get("id"),
+                    "price_usdc": offering.get("priceValue"),
+                    "description": offering.get("description"),
+                },
+            }
+        browsed = _acp_post("/browse", {"query": "memory", "top_k": 8})
+        if isinstance(browsed, dict) and browsed.get("ok"):
+            registry = {
+                "endpoint": (chain.get("api") or "") + "/agents/search",
+                "chain_id": chain.get("chainId"),
+                "network": chain.get("network"),
+                "live": True,
+            }
+            for entry in (browsed.get("data") or [])[:8]:
+                for offering in entry.get("offerings") or [{}]:
+                    live_offerings.append(
+                        {
+                            "name": entry.get("name"),
+                            "wallet": entry.get("walletAddress"),
+                            "offering": offering.get("name"),
+                            "price_usdc": offering.get("priceValue"),
+                        }
+                    )
+    else:
+        worker["error"] = "the ACP bridge did not answer"
+
+    sample = recorded.get("registry_sample") or {}
+    return _no_store(
+        {
+            "generated_at": utcnow(),
+            "worker": worker,
+            "agent": live_agent or recorded.get("agent"),
+            "agent_source": "live worker" if live_agent else "recorded",
+            "registry": registry
+            or {
+                "endpoint": sample.get("endpoint"),
+                "chain_id": sample.get("chain_id"),
+                "network": "base mainnet",
+                "live": False,
+                "recorded_at": sample.get("recorded_at"),
+            },
+            "offerings": live_offerings or sample.get("results") or [],
+            "offerings_source": "live worker" if live_offerings else "recorded",
+            # The bridge can be configured for either registry. When the live read
+            # is not the mainnet one, the recorded mainnet read is carried beside
+            # it rather than in place of it, so neither is mistaken for the other.
+            "mainnet_sample": sample if (registry or {}).get("chain_id") != 8453 else None,
+            "hire": recorded.get("hire"),
+            "lifecycle": recorded.get("lifecycle"),
+            "into_memory": recorded.get("into_memory"),
+            "source": recorded.get("source"),
+            "note": recorded.get("note"),
+        }
+    )
+
+
+def _acp_get(path: str) -> Any:
+    return _acp_call("GET", path, None)
+
+
+def _acp_post(path: str, body: dict[str, Any]) -> Any:
+    return _acp_call("POST", path, body)
+
+
+def _acp_call(method: str, path: str, body: dict[str, Any] | None) -> Any:
+    """One short call to the ACP bridge. A failure is a label, never an exception."""
+    import urllib.error
+    import urllib.request
+
+    request = urllib.request.Request(
+        ACP_WORKER + path,
+        method=method,
+        data=json.dumps(body).encode("utf-8") if body is not None else None,
+        headers={"content-type": "application/json", "accept": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=ACP_TIMEOUT) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except Exception:  # noqa: BLE001 - an unreachable worker is a fallback, not a 500
+        return None
 
 
 @app.get("/api/scorecard")

@@ -1,0 +1,59 @@
+{
+  "note": "Recorded Virtuals / ACP facts, from PROOF.md and workers/acp/README.md. The server prefers the live worker on :8787 and falls back to this file, saying which it used. Nothing here is a prediction: the job below is open, and it is rendered as open.",
+  "source": "PROOF.md + workers/acp/README.md",
+  "worker_url": "http://127.0.0.1:8787",
+  "agent": {
+    "name": "Admissible",
+    "id": "01a08398-e07c-7fa9-a58b-ab1de202ab35",
+    "wallet": "0x7a896bfc91f1d184b6eb91980a1c6d25219e097f",
+    "builder_code": "bc_dx1i4jek",
+    "offering": {
+      "name": "Admissibility verdict",
+      "id": "01a083a0-86d7-7a45-9589-6799d4b01ba4",
+      "price_usdc": 0.01,
+      "description": "Send a counterparty address and a claim about it. Returns whether that claim may justify moving money: the verdict code, the clause that decided it, and the onchain evidence it was re-derived from."
+    }
+  },
+  "registry_sample": {
+    "endpoint": "https://api.acp.virtuals.io/agents/search",
+    "chain_id": 8453,
+    "recorded_at": "2026-09-08",
+    "note": "A read of the live public Virtuals registry, no token and no gas. This is the read that selects a provider.",
+    "results": [
+      { "name": "riscov", "wallet": "0x3bc37bbac8b34e0ead2d20cf9ab030af60520fff", "offering": "token_risk", "price_usdc": 0.01 },
+      { "name": "thxbbAI", "wallet": "0x1c8e25932546a8814802f1510cd20206175c61bd", "offering": "honeypot_check", "price_usdc": 0.02 },
+      { "name": "alpha_operator", "wallet": "0xfb4e4bec6f4c9bf6c5cd2dec9661bdf7812dc8ec", "offering": "token_risk_brief", "price_usdc": 0.25 },
+      { "name": "Equitylens by Virtuals", "wallet": "0x139121f4f2601a94607658d9bf4e8d539ea7d63c", "offering": "free_micro_audit", "price_usdc": 0 }
+    ]
+  },
+  "hire": {
+    "job_id": 77820,
+    "protocol": "v2",
+    "chain_id": 8453,
+    "status": "open",
+    "client": "0x7a896BFC91F1D184B6eb91980A1C6d25219E097F",
+    "provider": "0xD535a8828FFd79c12622313cb55e37d86302E0DE",
+    "provider_name": "Knos",
+    "offering": "answer_a_question_from_my_memory",
+    "price_usdc": 0.01,
+    "requirement": { "question": "What did you record about this counterparty?" },
+    "funding_tx": "0x3c0a47deed0897fcc46c72db052edd4f61be58ae8a75eba3e0015a65fc214e44",
+    "funding_usdc": 0.05,
+    "gas_tx": "0xdff86ad0e090f95f56b470de539d3c916aee3f614f4e0a9d193376c7b113ed5d",
+    "verify": "acp job history --job-id 77820 --chain-id 8453",
+    "waiting_on": "the provider to set the budget and deliver",
+    "note": "Whether it completes is not ours to decide. The job exists on chain and its history is reproducible with one command; we are not going to draw a lifecycle we did not observe."
+  },
+  "lifecycle": [
+    { "step": "job.created", "state": "done", "detail": "client, provider and evaluator recorded on chain" },
+    { "step": "budget.set", "state": "waiting", "detail": "the provider sets the budget" },
+    { "step": "job.funded", "state": "pending", "detail": "client funds escrow in USDC" },
+    { "step": "job.submitted", "state": "pending", "detail": "the provider delivers" },
+    { "step": "job.completed", "state": "pending", "detail": "or job.rejected" }
+  ],
+  "into_memory": {
+    "on_delivery": "WITNESSED",
+    "on_settlement": "ATTESTED",
+    "note": "A delivered job is something our own agent saw, which is WITNESSED: discounted, capped, and never worth more than a few dollars of trust however many of them there are. It only becomes ATTESTED when the escrow settlement is on chain and the gate can re-derive the claim from it."
+  }
+}

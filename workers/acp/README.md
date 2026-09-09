@@ -3,10 +3,10 @@
 Bridge between the Python agent and **Virtuals Protocol ACP** (Agent Commerce Protocol).
 ACP is the reference implementation of [ERC-8183 "Agentic Commerce"](https://ethereum-magicians.org/t/erc-8183-agentic-commerce/27902) (Draft, 2026-02-25).
 
-Status as of 2026-09-08: **registry reads work end to end and are wired into the
-product. Job lifecycle writes are code-complete but blocked on a one-time
-interactive sign-in that has not been performed.** Details below, including
-exactly what was and was not run.
+Status as of 2026-09-09: **the sign-in has been done, the agent is registered, an
+offering is live in the registry, and a job exists on Base mainnet.** The job has
+not completed, because completing it is the provider's move and not ours. Details
+below, including exactly what was and was not run.
 
 ## What works right now
 
@@ -29,23 +29,26 @@ alpha_operator         0xfb4e4bec6f4c9bf6c5cd2dec9661bdf7812dc8ec  token_risk_br
 Equitylens by Virtuals 0x139121f4f2601a94607658d9bf4e8d539ea7d63c  free_micro_audit @ 0
 ```
 
-## What does not work yet, and exactly why
+## The one gate, and how it was passed
 
-`create_job` / `fund` / `complete` / `reject` / `poll` are implemented and reachable,
-but every one returns `Not authenticated.` because the ACP CLI has no session.
+Until 2026-09-09 every job write returned `Not authenticated.` The only obstacle was
+a **one-time interactive sign-in** — no waitlist, no approval queue, no token to hold:
 
-The gate is a **one-time interactive sign-in**, and nothing else:
+1. `acp configure` returns a Privy URL.
+2. Opening it shows a login modal: email OTP, Google, Twitter, TikTok, an external
+   wallet, or a passkey. **This step requires a human**, and it is account
+   authentication, so it is not something this worker performs on the owner's behalf.
+3. The CLI then exchanges the request for tokens and stores them in the OS keychain.
+4. `acp agent add-signer --policy restricted` registers a signing key, which needs a
+   second browser approval. `--no-wait` prints the URL and exits, but it does **not**
+   persist the local half of the keypair; the blocking form does. Getting that wrong
+   leaves the dashboard showing a signer while the CLI answers `NO_SIGNER`.
 
-1. `acp configure start --json` returns `{"url": "https://app.virtuals.io/acp/auth/v2?requestId=…", "requestId": "…"}`.
-   This was run; it returns a working URL.
-2. Opening that URL shows a **Privy** login modal offering email OTP, Google,
-   Twitter, TikTok, an external wallet, or a passkey. This was observed in a browser.
-3. `acp configure complete --request-id <id> --wait` then exchanges the requestId for
-   tokens and stores them in the OS keychain.
+The owner completed steps 2 and 4 in about two minutes. The worker never sees a
+private key: the CLI holds a non-custodial signer in the keychain and signs on demand.
 
-**Step 2 requires a human.** It was deliberately not completed here: it is account
-authentication, which is not something this worker or an agent should do on the
-owner's behalf. It takes roughly two minutes.
+`--policy restricted` is deliberate — the key is authorized for ACP transactions and
+nothing else.
 
 There is **no waitlist, no approval queue, no token-holding requirement, and no
 sandbox-jobs prerequisite.** The "10 sandbox jobs + 7 working days" gate that
@@ -195,8 +198,42 @@ Two caveats worth knowing:
 - ERC-8183: https://ethereum-magicians.org/t/erc-8183-agentic-commerce/27902
 - Bundled CLI skill reference: `acp skill print`
 
-## Not done
+## What was actually run
 
-No agent was registered. No job was created, funded, or completed. No transaction
-was broadcast on any chain, and no funds were spent. There are therefore **no tx
-hashes and no job ids to report** — anything of that shape elsewhere would be fabricated.
+The sign-in described above was completed on 2026-09-09 and everything below it
+followed. This section replaces an earlier one that said none of it had happened;
+that was true when it was written and is not true now.
+
+**Registered**, on Base mainnet:
+
+| | |
+|---|---|
+| agent | `Admissible`, id `01a08398-e07c-7fa9-a58b-ab1de202ab35` |
+| wallet | `0x7a896bfc91f1d184b6eb91980a1c6d25219e097f` (ACP provisions its own; it is not the deployer) |
+| offering | `Admissibility verdict`, `01a083a0-86d7-7a45-9589-6799d4b01ba4`, 0.01 USDC, visible in the registry |
+| builder code | `bc_dx1i4jek` (ERC-8021) |
+
+**A job**, chain 8453:
+
+```
+acp job history --job-id 77820 --chain-id 8453
+  status  open
+  job.created   client 0x7a896BFC…  provider 0xD535a882…  evaluator 0x7a896BFC…
+  requirement   {"question":"What did you record about this counterparty?"}
+```
+
+The provider is `Knos` (`0xD535a8828FFd79c12622313cb55e37d86302E0DE`), selling
+`answer_a_question_from_my_memory` at 0.01 USDC. The live registry read is what
+selected it.
+
+**Funding**, both to the agent wallet:
+`0x3c0a47deed0897fcc46c72db052edd4f61be58ae8a75eba3e0015a65fc214e44` (0.05 USDC)
+and `0xdff86ad0e090f95f56b470de539d3c916aee3f614f4e0a9d193376c7b113ed5d` (gas).
+
+## Still not done
+
+The job is `open`. `budget.set`, `job.funded`, `job.submitted` and `job.completed`
+have not happened, so **there is no escrow transaction and no deliverable**. Neither
+funding hash above is a job escrow, and anything presenting them as one would be
+wrong. The provider sets the budget; we can wait or cancel, and we have done
+neither.

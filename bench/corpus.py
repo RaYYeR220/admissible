@@ -42,29 +42,50 @@ from admissible.envelope import Envelope, Evidence, Provenance, Tier  # noqa: E4
 from admissible.verdicts import VerdictCode  # noqa: E402
 
 # --- Fixtures shared across cases ------------------------------------------------
-# Addresses are real, checksummed, and public. SIBYLCAP is ERC-8004 agent #20880
-# on Base mainnet; it is the counterparty our demo actually pays.
+# Every address below is EIP-55 checksummed, and they fall into two groups that
+# are labelled as such and never mixed up.
+#
+# REAL: live on Base mainnet, and each one is checkable in a block explorer.
+# SIBYLCAP and SIBYLCAP_PAYMENT are exactly what ERC-8004 agent #20880's onchain
+# manifest declares (``tokenURI(20880)`` -> https://sibylcap.com/8004.json);
+# USDC_BASE and ERC8004_REGISTRY are the canonical Base contracts; OUR_AGENT is
+# the address that made the $0.25 mainnet payment recorded in PROOF.md.
+#
+# SYNTHETIC: vanity placeholders that have never sent a transaction on Base --
+# nonce 0, no bytecode. They stand for attacker-controlled parties, and no case
+# asserts they are anything else. Nothing in the corpus needs them to exist,
+# because the chain facts every case is decided against are stubbed by the case
+# itself. Two of them (``0x1111...1111`` and ``0x...dEaD``) do hold stray ETH
+# that other people have burned into them, which is nobody's doing here and
+# which nothing in the corpus reads.
 
-SIBYLCAP = "0x4069ef1AFC8A9b2A29117a3740fCAb2912499fBe"
-#: The same agent's payment wallet. It is a different address from the identity
-#: wallet above, which is why "is this settlement to the agent" cannot be an
-#: equality test against one address.
-SIBYLCAP_PAYMENT = "0xe3e14118Ce1Ff5CbB1cCf0c8C2C69A6a35dc0E30"
-#: An unrelated client who has actually paid sibylcap and may therefore review it.
+#: REAL. Agent #20880's identity wallet -- the ERC-8004 NFT owner.
+SIBYLCAP = "0x4069ef1afC8A9b2a29117A3740fCAB2912499fBe"
+#: REAL. The same agent's payment wallet, as its manifest declares it. It is a
+#: different address from the identity wallet above, which is why "is this
+#: settlement to the agent" cannot be an equality test against one address.
+SIBYLCAP_PAYMENT = "0xe3E14118238b5693c854674f7c276136a2Dd311f"
+#: SYNTHETIC. A third party who, in the stubbed chain state of the cases that
+#: use it, has paid sibylcap and may therefore review it.
 HONEST_CLIENT = "0x1111111111111111111111111111111111111111"
+#: REAL. Circle's USDC on Base.
 USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+#: REAL. Our own agent; the payer in PROOF.md.
 OUR_AGENT = "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f"
-#: An address with no history at all. Every fabricated claim points here, because
-#: the interesting failure is an agent extending credit to a stranger.
+#: SYNTHETIC. An address with no history at all. Every fabricated claim points
+#: here, because the interesting failure is an agent extending credit to a
+#: stranger.
 STRANGER = "0x000000000000000000000000000000000000dEaD"
-#: A second address the same attacker controls. Sending USDC between these two
-#: costs gas and nothing else, and it produces a genuine settlement.
+#: SYNTHETIC. A second address the same attacker controls. Sending USDC between
+#: these two costs gas and nothing else, and it produces a genuine settlement.
 STRANGER_ALT = "0x00000000000000000000000000000000000bEEf1"
-#: A six-decimal ERC-20 the attacker deployed and mints for free. It is not
-#: USDC; the only thing that says so is the address.
-COUNTERFEIT = "0xdeAD00000000000000000000000000000000C01a"
-#: An ERC-8004 registry the attacker deployed, so they can write the reviews.
-ROGUE_REGISTRY = "0xBaD0000000000000000000000000000000008004"
+#: SYNTHETIC. Stands for a six-decimal ERC-20 the attacker deployed and mints for
+#: free. It is not USDC; the only thing that says so is the address.
+COUNTERFEIT = "0xDeaD00000000000000000000000000000000c01A"
+#: SYNTHETIC. Stands for an ERC-8004 registry the attacker deployed, so they can
+#: write the reviews.
+ROGUE_REGISTRY = "0xBad0000000000000000000000000000000008004"
+#: REAL. The canonical ERC-8004 reputation registry on Base.
 ERC8004_REGISTRY = "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63"
 BASE = 8453
 #: Base Sepolia. Its USDC is free from a faucet, which is the whole point.

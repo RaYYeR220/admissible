@@ -1,0 +1,71 @@
+{
+  "note": "The Base mainnet run, as recorded in PROOF.md at the repository root. Unlike web/fixtures/base-mainnet.json, none of this is synthetic: every hash below is on Base mainnet, chain 8453. The server does not transcribe the digest -- it recomputes keccak256 over the canonical claim with the same package the gate uses, recomputes the Merkle leaf and root, and reports whether each matches what was published. If this file ever drifts from what was executed, the surface says so instead of agreeing with itself.",
+  "reproduce": "PRIVATE_KEY=0x... ANCHOR_ADDRESS=0x90c82f9711935B649a80d6dDDFc0C3E21a0D66FC python scripts/live_proof.py --execute",
+  "source": "PROOF.md",
+  "chain_id": 8453,
+  "chain": "Base mainnet",
+  "explorer": "https://basescan.org",
+  "agent": {
+    "self": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
+    "counterparty_agent_id": 20880,
+    "identity_wallet": "0x4069ef1afC8A9b2a29117A3740fCAB2912499fBe",
+    "payment_wallet": "0xe3E14118238b5693c854674f7c276136a2Dd311f",
+    "identity_registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+    "note": "Agent 20880 declares a payment wallet that is not its identity wallet. An agent verifying settlements against the owner address would reject every genuine payment this counterparty has ever received; the first run of the script did exactly that and the gate answered counterparty_mismatch on our own evidence."
+  },
+  "contract": {
+    "name": "AdmissibilityAnchor",
+    "address": "0x90c82f9711935B649a80d6dDDFc0C3E21a0D66FC",
+    "deployment_tx": "0xecc0349addf7f8af3451f5c03fdc77fb8c1068e025b3bb3ac97bda25d897b173",
+    "verified": true,
+    "note": "Deployment is the floor, not the proof. What follows are executed actions."
+  },
+  "settlement": {
+    "tx": "0x057a4f0a6f2c964a6b1cff66494f879383214f531bdcdc8ebba0a501115acab8",
+    "from": "0x8cDec2c69be9e200A8591da3e86e822B03f7cE1f",
+    "to": "0xe3E14118238b5693c854674f7c276136a2Dd311f",
+    "value": 250000,
+    "asset": "USDC",
+    "amount_usd": 0.25,
+    "service_http": 200,
+    "note": "Paid first, then the request. The evidence is final on chain before the service is asked to do anything, so it exists whether or not the service answers. It answered HTTP 200 with a full project evaluation."
+  },
+  "claim": {
+    "counterparty": "0xe3E14118238b5693c854674f7c276136a2Dd311f",
+    "agent_id": 20880,
+    "outcome": "delivered",
+    "amount_usd": 0.25,
+    "service": "project-evaluation"
+  },
+  "published_digest": "0x7181f95ca099e719616bfed715576cee326686299601822a0bbd1410fd879120",
+  "verdict": {
+    "code": "admissible",
+    "explain": "The claim was re-derived from onchain evidence and the evidence digest matches what was recorded when the memory was written."
+  },
+  "feedback": {
+    "tx": "0x89c1cdbbd1ce2e7163e4493713bf4253d9f3620f788fc8fffb3334dc622ef8bc",
+    "registry": "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63",
+    "feedback_hash": "0x7181f95ca099e719616bfed715576cee326686299601822a0bbd1410fd879120",
+    "block": 51063300,
+    "score": "100 / 2dp",
+    "tags": ["admissible", "settled"],
+    "note": "readFeedback returns value, decimals and tags -- and no feedbackHash, because the getter does not return it. The commitment exists only in the NewFeedback event, so a verifier using the documented interface is structurally unable to check what a score was about. Our own scan of 8,710 NewFeedback events over the 300,000 blocks to 51,055,657 found 92.8% commit a zero hash; excluding the one agent that emits 7,893 of them, 23.6% of 817; weighted by agent, 61 of 132 (46.2%) have never received a hashed feedback."
+  },
+  "anchor": {
+    "tx": "0x82098dcd5855aef87ba1ca6b590da5592c20ea73552a7896c7e60121b4c77d44",
+    "root": "0x6e10316799370260a073273bba5ed79547241743ebe5471624e48cdd52ecad38",
+    "leaves": 1,
+    "as_of": "2026-09-09T01:05:44.524Z",
+    "anchor_count": 1,
+    "verify_latest": true,
+    "note": "verifyLatest(agent, leafOf(memory digest), []) returned true against the deployed contract, and returned false for a digest we never held."
+  },
+  "control_claim": {
+    "counterparty": "0x000000000000000000000000000000000000dEaD",
+    "agent_id": 20880,
+    "outcome": "delivered",
+    "amount_usd": 5000.0,
+    "service": "project-evaluation"
+  },
+  "control_note": "The negative control: the same claim with an amount nobody paid and a counterparty nobody settled with. Its digest is a well-formed memory digest that this agent never held, and it fails against the same anchored root. Without it the green line above proves nothing."
+}

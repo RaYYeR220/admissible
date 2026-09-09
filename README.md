@@ -42,8 +42,10 @@ journals the write in the same breath:
 | **the FLAGGED tier** | [`flagged.py:150`](packages/admissible/src/admissible/flagged.py#L150) — `INSERT INTO flagged_actors` |
 | **the relations graph** | [`relations.py:114`](packages/admissible/src/admissible/relations.py#L114) — `INSERT INTO entity_relations` |
 
-**And the decision path reads it.** [`gate.py:211`](packages/admissible/src/admissible/gate.py#L211)
-`AdmissionGate.admit` and [`policy.py:161`](packages/admissible/src/admissible/policy.py#L161)
+**And the decision path reads it.** [`gate.py:264`](packages/admissible/src/admissible/gate.py#L264)
+`AdmissionGate.admit` (the class is at
+[`gate.py:213`](packages/admissible/src/admissible/gate.py#L213)) and
+[`policy.py:161`](packages/admissible/src/admissible/policy.py#L161)
 `TrustPolicy.decide` take nothing but recalled memory and the chain.
 
 **The deletion test, on camera and in one command:**
@@ -93,6 +95,11 @@ against a table whose schema has no `identifier` column, inside a bare `except E
 Admissible writes the tier that check was waiting for, through Sibyl's own connection, its own
 tenant scoping and its own timestamp format — plus `entity_relations`, which turns "who vouched for
 whom" into a graph and lets a single flag propagate to everything its source touched.
+
+That does not make the check pass, and we do not claim it does: run against our own populated store,
+which has rows in `flagged_actors`, that `SELECT` still raises `no such column: identifier`. The bug
+is the query, not the empty table — which is the sharper version of the finding, because it means
+nobody could have noticed the tier was missing by running the linter.
 
 ---
 
@@ -159,12 +166,20 @@ python scripts/demo.py --session 2     # a NEW process recalls the flag and refu
 python scripts/demo.py --delete-memory # the same attack now succeeds
 ```
 
-Live against Base mainnet, with a funded key:
+Live against Base mainnet. No key, no funds — `--live` only reads:
 
 ```bash
-export PRIVATE_KEY=0x...      # see .env.example
-python scripts/demo.py --live
+python scripts/demo.py --live --session 1     # optional: BASE_RPC_URL=https://your-endpoint
 ```
+
+It refuses everything, and that is the fixtures being honest rather than the gate failing. The
+seeded history cites transactions from `apps/fixtures/base-mainnet.json`, which declares itself
+synthetic in its own provenance block: none of those hashes was ever mined. Pointed at the real
+chain the gate re-derives each one, does not find it, and answers `evidence_not_found` — including
+for the negative control, whose settlements are as invented as the attacker's. So `--live` proves
+the gate reads Base over the network through the same protocol the fixtures satisfy, and proves
+nothing about the scenario; run it without `--live` for that. The one place money actually moved is
+`scripts/live_proof.py`, which does need `PRIVATE_KEY` and does spend — see `PROOF.md`.
 
 ---
 
@@ -190,10 +205,13 @@ verifier using the documented getter is *structurally unable* to check the commi
 probably not a coincidental gap — it is the cheapest explanation for how much feedback ships with an
 empty hash.
 
-We measured it ourselves over 8,710 `NewFeedback` events in the 300,000 blocks to 51,055,657:
-**92.8% carry a zero hash.** One agent accounts for 7,893 of them; excluding it, 23.6% of 817.
-Weighted by agent, **61 of 132 (46.2%) have never received a hashed feedback.** All three numbers are
-in the source. Admissible reads the events, not the getter.
+We measured it ourselves over 8,690 `NewFeedback` events in the 300,000 blocks to 51,055,657:
+**8,068 of them — 92.8% — carry a zero hash.** One agent accounts for 7,874; excluding it, 194 of the
+remaining 816, or 23.8%. Weighted by agent, **61 of 132 (46.2%) have never received a hashed
+feedback.** `python scripts/measure_feedback.py` re-runs the scan over that fixed window and prints
+all three; it needs a Base RPC endpoint and no key. How long it takes is the endpoint's decision —
+between half a minute and a few minutes, depending on how wide an `eth_getLogs` span it allows — and
+the counts do not change with the span. Admissible reads the events, not the getter.
 
 ---
 

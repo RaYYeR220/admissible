@@ -97,6 +97,12 @@ plumbing rather than verdicts:
 
 ## Found and not fixed
 
+**One heading, because there is one open finding.** Nineteen of the twenty
+red-team findings are fixed and have a case in `bench/corpus.py`. This is the
+twentieth. The four trade-offs that follow it under "Decided rather than found"
+are not findings at all, and putting them here would let a reader who counts
+headings arrive at a different number from a reader who reads sentences.
+
 ### Supersession names bytes, and it wants to name a subject
 
 `_check_superseded` asks the history for `superseding_digest(env.digest)`. A
@@ -119,6 +125,15 @@ can only restore credit that a real, correctly-bound settlement supports. What
 it evades is the *interpretive* half of a retraction — "that settlement did not
 mean what we thought" — not the evidence half. And credit is now attributed to
 the transaction, so a resurrected copy sitting beside the original adds nothing.
+
+---
+
+## Decided rather than found
+
+Four limits that no attack surfaced, because each one is a choice this code
+makes on purpose. They are listed with the same prominence as the finding above
+because a limit you chose is still a limit that will hurt whoever relies on you,
+and burying it in a design document is how it stops being disclosed.
 
 ### A crafted refusal is not treated as a forgery attempt
 

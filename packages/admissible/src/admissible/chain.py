@@ -17,11 +17,14 @@ returns a cheerful default. That is also why reverts are never retried: a revert
 
 **A feedback hash that is not a hash is not evidence.** ERC-8004's
 ``giveFeedback`` accepts ``bytes32(0)`` and most callers pass exactly that. Over
-the 8,710 ``NewFeedback`` events emitted on Base mainnet in the 300,000 blocks
-to block 51,055,657, 92.8% carried a zero ``feedbackHash``; 61 of the 132 agents
-receiving feedback in that window had *never* received one with a hash. A score
-with no digest behind it is an opinion. :meth:`BaseChain.give_feedback` refuses
-to write one.
+the 8,690 ``NewFeedback`` events emitted on Base mainnet in the 300,000 blocks
+to block 51,055,657, 8,068 -- 92.8% -- carried a zero ``feedbackHash``. One
+agent (#25975) emits 7,874 of them; excluding it, 194 of the remaining 816, or
+23.8%. Weighted by agent, 61 of the 132 agents receiving feedback in that window
+had *never* received one with a hash: 46.2%. ``scripts/measure_feedback.py``
+re-runs that scan and prints all three; the window is fixed so the answer does
+not drift. A score with no digest behind it is an opinion.
+:meth:`BaseChain.give_feedback` refuses to write one.
 
 **The hash is in the log, not in the getter.** ``readFeedback`` returns the
 score, the tags and the revocation flag -- and not the ``feedbackHash``. The
@@ -141,9 +144,11 @@ BASE_MAINNET = ChainConfig(
     rpc_url="https://mainnet.base.org",
     identity_registry="0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
     reputation_registry="0x8004BAa17C55a88189AE136b182e5fdA19dE9b63",
-    # Bytecode is present at this address on mainnet but the contract was never
-    # initialised: every call reverts. We keep it for completeness and the
-    # client refuses to pretend otherwise.
+    # Recorded, not asserted: this address holds 130 bytes of proxy bytecode on
+    # Base mainnet -- and the same 130 bytes at the same address on Base Sepolia
+    # -- and ``owner()`` answers on both. We have not exercised the rest of its
+    # surface, so nothing here claims to know whether the validation flow works.
+    # It is carried for completeness; nothing in this package calls it.
     validation_registry="0x8004Cb1BF31DAf7788923b405b754f57acEB4272",
     registry_genesis_block=41_663_783,
     usdc="0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
