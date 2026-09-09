@@ -49,3 +49,6 @@ scratch/
 notes/
 *-backup*
 *.bundle
+
+# live mainnet run state
+.live/

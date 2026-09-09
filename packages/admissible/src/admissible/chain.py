@@ -166,6 +166,14 @@ _BY_CHAIN_ID: dict[int, ChainConfig] = {
 }
 
 
+class TransactionReverted(RuntimeError):
+    """A write reached the chain and the chain said no.
+
+    Distinct from :class:`ChainUnreachable`: this is an answer, and retrying it
+    would just spend the fee again.
+    """
+
+
 class ZeroFeedbackHash(ValueError):
     """Refused: a feedback record with no digest commits to nothing.
 
@@ -987,6 +995,98 @@ class BaseChain:
         return None
 
     # -- settlement -------------------------------------------------------------
+
+    #: ``anchor(bytes32 root, uint64 asOf, uint32 leafCount)`` -- the only two
+    #: functions we call on our own contract, inlined rather than shipping a
+    #: build artefact the reader would have to trust.
+    ANCHOR_ABI = [
+        {
+            "type": "function",
+            "name": "anchor",
+            "stateMutability": "nonpayable",
+            "inputs": [
+                {"name": "root", "type": "bytes32"},
+                {"name": "asOf", "type": "uint64"},
+                {"name": "leafCount", "type": "uint32"},
+            ],
+            "outputs": [{"name": "index", "type": "uint256"}],
+        },
+        {
+            "type": "function",
+            "name": "anchorCount",
+            "stateMutability": "view",
+            "inputs": [{"name": "agent", "type": "address"}],
+            "outputs": [{"name": "", "type": "uint256"}],
+        },
+    ]
+
+    def transfer_erc20(
+        self, token: str, to: str, amount: int, *, wait: bool = True, gas_buffer: float = 1.25
+    ) -> str:
+        """Move tokens, and return the hash so the caller can cite it.
+
+        Used for the direct-settlement half of x402: pay first, then present the
+        hash. It costs one extra transaction over signing an authorization, and
+        it buys the thing this project is about -- the evidence is final on chain
+        before the request is made, so it exists whether or not the service ever
+        answers.
+        """
+        account = self._require_signer("transfer_erc20")
+        if amount <= 0:
+            raise ValueError("refusing to broadcast a zero-value transfer")
+        # The shipped erc20 ABI covers only what the reader needs -- balanceOf
+        # and the Transfer event. The one write we make is spelled out here so
+        # the file stays a reader's ABI and the calldata for a transfer is
+        # visible next to the code that sends it.
+        transfer_abi = [{
+            "type": "function",
+            "name": "transfer",
+            "stateMutability": "nonpayable",
+            "inputs": [
+                {"name": "to", "type": "address"},
+                {"name": "amount", "type": "uint256"},
+            ],
+            "outputs": [{"name": "", "type": "bool"}],
+        }]
+        contract = self.w3.eth.contract(
+            address=self.w3.to_checksum_address(token), abi=transfer_abi
+        )
+        fn = contract.functions.transfer(self.w3.to_checksum_address(to), int(amount))
+        receipt = self._send(fn, account, wait=wait, gas_buffer=gas_buffer)
+        if receipt is None:
+            raise ChainUnreachable("transfer was broadcast without waiting for a receipt")
+        if receipt.get("status") != 1:
+            raise TransactionReverted(f"transfer reverted: {_hex0x(receipt['transactionHash'])}")
+        return _hex0x(receipt["transactionHash"])
+
+    def anchor(
+        self,
+        contract_address: str,
+        root: str,
+        as_of_unix: int,
+        leaf_count: int,
+        *,
+        wait: bool = True,
+        gas_buffer: float = 1.25,
+    ) -> str:
+        """Publish the Merkle commitment over everything currently admissible.
+
+        The contract refuses an ``asOf`` older than the agent's last one, so a
+        failure here usually means the caller is trying to re-publish an older
+        view of its own memory. That is the guarantee, not a bug.
+        """
+        account = self._require_signer("anchor")
+        contract = self.w3.eth.contract(
+            address=self.w3.to_checksum_address(contract_address), abi=self.ANCHOR_ABI
+        )
+        fn = contract.functions.anchor(_to_bytes32(root), int(as_of_unix), int(leaf_count))
+        receipt = self._send(fn, account, wait=wait, gas_buffer=gas_buffer)
+        if receipt is None:
+            raise ChainUnreachable("anchor was broadcast without waiting for a receipt")
+        if receipt.get("status") != 1:
+            raise TransactionReverted(f"anchor reverted: {_hex0x(receipt['transactionHash'])}")
+        return _hex0x(receipt["transactionHash"])
+
 
     def verify_settlement(
         self,
