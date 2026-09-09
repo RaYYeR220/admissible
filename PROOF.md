@@ -123,9 +123,30 @@ The second line is the negative control. Without it the first proves nothing.
 | offering | `Admissibility verdict`, `01a083a0-86d7-7a45-9589-6799d4b01ba4`, 0.01 USDC, live in the registry |
 | builder code | `bc_dx1i4jek` (ERC-8021) |
 
-`workers/acp/` reads the live Virtuals registry over the public search API and returns real priced
-offerings; that read drives which counterparty the agent considers. See `workers/acp/README.md` for
-what is exercised and what is not — it is written to be checked, not to impress.
+### A job, on Base mainnet
+
+| | |
+|---|---|
+| job id | `77820`, protocol v2, chain 8453 |
+| client | `0x7a896BFC91F1D184B6eb91980A1C6d25219E097F` (our agent) |
+| provider | `0xD535a8828FFd79c12622313cb55e37d86302E0DE` (`Knos`, `answer_a_question_from_my_memory`, 0.01 USDC) |
+| funding | [`0x3c0a47deed0897fcc46c72db052edd4f61be58ae8a75eba3e0015a65fc214e44`](https://basescan.org/tx/0x3c0a47deed0897fcc46c72db052edd4f61be58ae8a75eba3e0015a65fc214e44) (0.05 USDC) and [`0xdff86ad0e090f95f56b470de539d3c916aee3f614f4e0a9d193376c7b113ed5d`](https://basescan.org/tx/0xdff86ad0e090f95f56b470de539d3c916aee3f614f4e0a9d193376c7b113ed5d) (gas) |
+
+```
+acp job history --job-id 77820 --chain-id 8453
+  status  open
+  job.created   client 0x7a896BFC…  provider 0xD535a882…  evaluator 0x7a896BFC…
+  requirement   {"question":"What did you record about this counterparty?"}
+```
+
+We hired a memory agent, which is the shape the product is about. **Whether it completes is not ours
+to decide** — the provider sets the budget and delivers, and at the time of writing it has not. The
+job exists on chain and the history above is reproducible with one command; we are not going to
+describe a completed lifecycle we did not observe.
+
+`workers/acp/` also reads the live Virtuals registry over the public search API and returns real
+priced offerings; that read is what selected this provider. See `workers/acp/README.md` for what is
+exercised and what is not — it is written to be checked, not to impress.
 
 ---
 
