@@ -5,6 +5,8 @@
 > **2nd place, [Sibyl Labs Hackathon](https://x.com/sibyl_labs_/status/2100306112734208380)** — "agents
 > that don't forget", September 2026, with Base and Virtuals Protocol. 124.38 points across 92 submitted
 > builds.
+>
+> **Prize payout wallet (USDC on Base):** `0x948025DCcaA8d8B995Ab25614Eb3f2209A769a30`
 
 Admissible is an agent that hires and pays other agents on Base. What it remembers about a
 counterparty decides whether it pays, escrows, or refuses — and it enforces one rule in code:
