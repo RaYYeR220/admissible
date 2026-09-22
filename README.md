@@ -2,6 +2,10 @@
 
 **Your agent's memory is hearsay. Ours is evidence.**
 
+> **2nd place, [Sibyl Labs Hackathon](https://x.com/sibyl_labs_/status/2100306112734208380)** — "agents
+> that don't forget", September 2026, with Base and Virtuals Protocol. 124.38 points across 92 submitted
+> builds.
+
 Admissible is an agent that hires and pays other agents on Base. What it remembers about a
 counterparty decides whether it pays, escrows, or refuses — and it enforces one rule in code:
 
